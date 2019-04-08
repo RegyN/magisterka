@@ -83,10 +83,10 @@ public class TreeNode {
             }
         }
         else if (uninitiatedChildren > 0) {    // Ten węzeł ma nierozwinięte dzieci
-            int chosen = GetNthUninitialized(generator.nextInt(UninitiatedLeft()));
-            obs.advance(actions.get(chosen));
-            children.set(chosen, new TreeNode(this, obs));
-            children.get(chosen).name = actions.get(chosen).name();
+            int choice = GetNthUninitialized(generator.nextInt(UninitiatedLeft()));
+            obs.advance(actions.get(choice));
+            children.set(choice, new TreeNode(this, obs));
+            children.get(choice).name = actions.get(choice).name();
             uninitiatedChildren--;
         }
         else {
@@ -99,7 +99,7 @@ public class TreeNode {
     /**
      * Zwraca liczbę niezainicjalizowanych dzieci obecnego węzła
      */
-    private int UninitiatedLeft(){
+    protected int UninitiatedLeft(){
         int left = 0;
         for (TreeNode child : children) {
             if (child == null) {
@@ -114,7 +114,7 @@ public class TreeNode {
      * @param n numer niezainicjalizowanego dziecka
      * @return indeks n-tego niezainicjalizowanego dziecka
      */
-    private int GetNthUninitialized(int n){
+    protected int GetNthUninitialized(int n){
         int i=0;
         for(; i<children.size(); i++){
             if(children.get(i) == null){

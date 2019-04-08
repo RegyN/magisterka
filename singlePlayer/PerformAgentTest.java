@@ -11,14 +11,13 @@ import java.util.Random;
 public class PerformAgentTest {
     public static void main(String [] args){
         String Controller = "tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo.Agent";
+        int[] gamesToPlay = {63, 42, 0};
+        int numTests = 2;
 
         String spGamesCollection =  "examples/all_games_sp.csv";
         String[][] games = Utils.readGames(spGamesCollection);
         Random generator = new Random();
 
-        // Game and level to play
-        int[] gamesToPlay = {63};
-        int numTests = 2;
         TestResult res = new TestResult(Controller);
 
         for(int i=0; i< gamesToPlay.length; i++){
@@ -26,11 +25,14 @@ public class PerformAgentTest {
             String gameName = games[gameIdx][1];
             String game = games[gameIdx][0];
             GameResult gRes = new GameResult(gameName, gameIdx);
-            for(int levelIdx=0; levelIdx < 2; levelIdx++){
-                int seed = generator.nextInt();
-                String level = game.replace(gameName, gameName + "_lvl" + 0);
-                double[] score = ArcadeMachine.runOneGame(game, level, true, Controller, null, seed, 0);
-                gRes.AddResult(score, levelIdx);
+            for(int levelIdx=0; levelIdx < 2; levelIdx++) {
+                for (int j = 0; j < numTests; j++){
+                    int seed = generator.nextInt();
+                    String level = game.replace(gameName, gameName + "_lvl" + 0);
+                    double[] score = ArcadeMachine.runOneGame(game, level, false, Controller, null, seed, 0);
+                    gRes.AddResult(score, levelIdx);
+                    System.out.println("Wykonano test " + j + " w grze " + gameIdx + " poziom " + levelIdx + ". Wynik to: " + score[0] + ", " + score[1] + ", " + score[2] + ".");
+                }
             }
             res.Results.add(gRes);
         }

@@ -49,10 +49,8 @@ public class Agent extends AbstractPlayer {
     public Types.ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
         ResetTimers(elapsedTimer);
         actions = stateObs.getAvailableActions();
-        
-        if(root == null) {
-            TreeNode root = new TreeNode(depth);
-        }
+
+        root = new TreeNodeWithState(depth, stateObs);
         String breakReason;
         int remainingLimit = 5;
         while (true) {
