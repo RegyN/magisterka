@@ -18,11 +18,15 @@ public class Agent extends AbstractPlayer {
     private int numIters;
     private ArrayList<Types.ACTIONS> actions;
     TreeNode root;
+    int turnNumber;
+    GameKnowledge knowledge;
+    
     
     public Agent(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
         randomGenerator = new Random();
         actions = stateObs.getAvailableActions();
-        this.depth = 10;
+        depth = 10;
+        turnNumber = 0;
     }
     
     private void ResetTimers(ElapsedCpuTimer elapsedTimer) {
@@ -48,26 +52,25 @@ public class Agent extends AbstractPlayer {
     @Override
     public Types.ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
         ResetTimers(elapsedTimer);
-        actions = stateObs.getAvailableActions();
 
-        root = new TreeNodeWithState(depth, stateObs);
-        String breakReason;
+        root = new TreeNode(depth);
+        //String breakReason;
         int remainingLimit = 5;
         while (true) {
             if(remaining <= 2 * avgTimeTaken) {
-                breakReason = "avgTimeTaken";
+                //breakReason = "avgTimeTaken";
                 break;
             }
             else if(remaining < remainingLimit) {
-                breakReason = "remainingLimit";
+                //breakReason = "remainingLimit";
                 break;
             }
             root.Expand(stateObs);
             UpdateTimers(elapsedTimer);
         }
-        System.out.println(numIters + " " + breakReason);
+        //System.out.println(numIters + " " + breakReason);
         
-        //PĘTLA DO DEBUGOWANIA BEZ OGRANICZEN CZASOWYCH
+//        PĘTLA DO DEBUGOWANIA BEZ OGRANICZEN CZASOWYCH
 //        int iterations = 15;
 //        for(int i = 0; i<iterations; i++){
 //            root.Expand(stateObs);

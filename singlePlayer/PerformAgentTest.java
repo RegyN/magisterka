@@ -11,8 +11,9 @@ import java.util.Random;
 public class PerformAgentTest {
     public static void main(String [] args){
         String Controller = "tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo.Agent";
-        int[] gamesToPlay = {63, 42, 0};
-        int numTests = 2;
+        int[] gamesToPlay = {0, 10, 13, 18, 42, 60, 68, 80, 84, 100};
+        int numTests = 10;
+        int numLevels = 1;
 
         String spGamesCollection =  "examples/all_games_sp.csv";
         String[][] games = Utils.readGames(spGamesCollection);
@@ -25,7 +26,7 @@ public class PerformAgentTest {
             String gameName = games[gameIdx][1];
             String game = games[gameIdx][0];
             GameResult gRes = new GameResult(gameName, gameIdx);
-            for(int levelIdx=0; levelIdx < 2; levelIdx++) {
+            for(int levelIdx=0; levelIdx < numLevels; levelIdx++) {
                 for (int j = 0; j < numTests; j++){
                     int seed = generator.nextInt();
                     String level = game.replace(gameName, gameName + "_lvl" + 0);
@@ -40,7 +41,6 @@ public class PerformAgentTest {
         try(FileWriter writer = new FileWriter("C:\\temp\\file.txt")) {
             String json = gson.toJson(res);
             writer.write(json);
-            writer.close();
         }
         catch(Exception e){
             System.out.println(e.getMessage());

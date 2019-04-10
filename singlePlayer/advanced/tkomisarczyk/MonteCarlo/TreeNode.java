@@ -47,7 +47,7 @@ public class TreeNode {
         UpdateScoreUpwards(result);
     }
     
-    public int RollSimulation(StateObservation obs, Random generator) {
+    private int RollSimulation(StateObservation obs, Random generator) {
         var actions = obs.getAvailableActions();
         int d = depth;
         for (; d < maxDepth; d++) {
@@ -64,23 +64,22 @@ public class TreeNode {
             obs = obs.copy();
         }
         var actions = obs.getAvailableActions();
+        if(actions.size() <= 0){  // Czasami z powodu niedeterminizmu gra kończy się wcześniej niż by się można spodziewać. Wtedy wracamy do korzenia.
+            var result = Utilities.EvaluateState(obs);
+            UpdateScoreUpwards(result);
+            return;
+        }
         
-        if (children == null) {             // Pierwszy raz rozwijamy to dziecko
-            if (actions.size() == 0) {      // Z tego dziecka nie da się wykonać akcji (gra się zakończyła)
-                var result = Utilities.EvaluateState(obs);
-                UpdateScoreUpwards(result);
+        if (children == null) {
+            int choice = generator.nextInt(actions.size());
+            obs.advance(actions.get(choice));
+            children = new ArrayList<>();
+            for(int i=0; i< actions.size(); i++){
+                children.add(null);
             }
-            else {
-                int choice = generator.nextInt(actions.size());
-                obs.advance(actions.get(choice));
-                children = new ArrayList<>();
-                for(int i=0; i< actions.size(); i++){
-                    children.add(null);
-                }
-                children.set(choice, new TreeNode(this, obs));
-                children.get(choice).name = actions.get(choice).name();
-                uninitiatedChildren = actions.size() - 1;
-            }
+            children.set(choice, new TreeNode(this, obs));
+            children.get(choice).name = actions.get(choice).name();
+            uninitiatedChildren = actions.size() - 1;
         }
         else if (uninitiatedChildren > 0) {    // Ten węzeł ma nierozwinięte dzieci
             int choice = GetNthUninitialized(generator.nextInt(UninitiatedLeft()));
