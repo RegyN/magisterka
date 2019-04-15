@@ -14,18 +14,16 @@ public class Test {
 
     public static void main(String[] args) {
 
-		// Available tracks:
-		String sampleRandomController = "tracks.singlePlayer.simple.sampleRandom.Agent";
-		String doNothingController = "tracks.singlePlayer.simple.doNothing.Agent";
-		String sampleOneStepController = "tracks.singlePlayer.simple.sampleonesteplookahead.Agent";
-		String sampleFlatMCTSController = "tracks.singlePlayer.simple.greedyTreeSearch.Agent";
-
-		String sampleMCTSController = "tracks.singlePlayer.advanced.sampleMCTS.Agent";
-        String sampleRSController = "tracks.singlePlayer.advanced.sampleRS.Agent";
-        String sampleRHEAController = "tracks.singlePlayer.advanced.sampleRHEA.Agent";
-		String sampleOLETSController = "tracks.singlePlayer.advanced.olets.Agent";
-		String adrienController = "tracks.singlePlayer.advanced.adrienctx.Agent";
-		String tomekController = "tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo.Agent";
+		// Mistrzowie nowi:
+		String thorbjrn = "tracks.singlePlayer.past.thorbjrn.Agent";
+		String YOLOBOT = "tracks.singlePlayer.past.YOLOBOT.Agent";
+		String Return42 = "tracks.singlePlayer.past.Return42.Agent";
+		// Mistrzowie starzy:
+		String adrien = "tracks.singlePlayer.past.adrien.Agent";
+		String idealStandard = "tracks.singlePlayer.past.IdealStandard.Agent";
+		String Shmokin = "tracks.singlePlayer.past.Shmokin.Agent";
+		// Mistrzowie przyszli:
+		String tomekController = "tracks.singlePlayer.advanced.tkomisarczyk.Agent";
 
 		//Load available games
 		String spGamesCollection =  "examples/all_games_sp.csv";
@@ -54,7 +52,7 @@ public class Test {
 		//ArcadeMachine.playOneGame(game, level1, recordActionsFile, seed);
 
 		// 2. This plays a game in a level by the controller.
-		ArcadeMachine.runOneGame(game, level1, visuals, tomekController, recordActionsFile, seed, 0);
+		ArcadeMachine.runOneGame(game, level1, visuals, Return42, recordActionsFile, seed, 0);
 
 
 		// 3. This replays a game from an action file previously recorded
