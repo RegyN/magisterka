@@ -23,7 +23,7 @@ public class Test {
 		String idealStandard = "tracks.singlePlayer.past.IdealStandard.Agent";
 		String Shmokin = "tracks.singlePlayer.past.Shmokin.Agent";
 		// Mistrzowie przyszli:
-		String tomekController = "tracks.singlePlayer.advanced.tkomisarczyk.Agent";
+		String tomekController = "tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo.Agent";
 
 		//Load available games
 		String spGamesCollection =  "examples/all_games_sp.csv";
@@ -34,7 +34,7 @@ public class Test {
 		int seed = new Random().nextInt();
 
 		// Game and level to play
-		int gameIdx = 100;
+		int gameIdx = 63;
 		int levelIdx = 0; // level names from 0 to 4 (game_lvlN.txt).
 		String gameName = games[gameIdx][1];
 		for(int i=0; i<111; i++){
@@ -52,7 +52,7 @@ public class Test {
 		//ArcadeMachine.playOneGame(game, level1, recordActionsFile, seed);
 
 		// 2. This plays a game in a level by the controller.
-		ArcadeMachine.runOneGame(game, level1, visuals, Return42, recordActionsFile, seed, 0);
+		ArcadeMachine.runOneGame(game, level1, visuals, tomekController, recordActionsFile, seed, 0);
 
 
 		// 3. This replays a game from an action file previously recorded

@@ -27,6 +27,20 @@ public class Agent extends AbstractPlayer {
         actions = stateObs.getAvailableActions();
         depth = 10;
         turnNumber = 0;
+    
+        // TODO: Replace with proper knowledge gathering:
+        knowledge = GameKnowledge.getNew();
+        knowledge.sprites.put(0, SpriteType.Wall);
+        knowledge.sprites.put(2, SpriteType.Floor);
+        knowledge.sprites.put(4, SpriteType.Point);
+        knowledge.sprites.put(5, SpriteType.Point);
+        knowledge.sprites.put(6, SpriteType.Other);
+        knowledge.sprites.put(15, SpriteType.Enemy);
+        knowledge.sprites.put(18, SpriteType.Enemy);
+        knowledge.sprites.put(21, SpriteType.Enemy);
+        knowledge.sprites.put(24, SpriteType.Enemy);
+        knowledge.sprites.put(27, SpriteType.Other);
+        knowledge.type = GameType.Planar2D;
     }
     
     private void ResetTimers(ElapsedCpuTimer elapsedTimer) {
@@ -52,7 +66,7 @@ public class Agent extends AbstractPlayer {
     @Override
     public Types.ACTIONS act(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
         ResetTimers(elapsedTimer);
-
+        
         root = new TreeNode(depth);
         //String breakReason;
         int remainingLimit = 5;
