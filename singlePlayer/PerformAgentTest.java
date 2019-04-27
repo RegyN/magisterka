@@ -12,11 +12,13 @@ public class PerformAgentTest {
     public static void main(String [] args){
         String Controller = "tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo.Agent";
         int[] gamesToPlay = {0, 10, 13, 18, 42, 60, 68, 80, 84, 100};
+        int[] levels = {0, 1};
         int numTests = 10;
         int numLevels = 1;
 
         String spGamesCollection =  "examples/all_games_sp.csv";
         String[][] games = Utils.readGames(spGamesCollection);
+
         Random generator = new Random();
 
         TestResult res = new TestResult(Controller);
@@ -26,7 +28,8 @@ public class PerformAgentTest {
             String gameName = games[gameIdx][1];
             String game = games[gameIdx][0];
             GameResult gRes = new GameResult(gameName, gameIdx);
-            for(int levelIdx=0; levelIdx < numLevels; levelIdx++) {
+            for(int lev=0; lev < levels.length; lev++) {
+                int levelIdx = levels[lev];
                 for (int j = 0; j < numTests; j++){
                     int seed = generator.nextInt();
                     String level = game.replace(gameName, gameName + "_lvl" + 0);
@@ -38,7 +41,7 @@ public class PerformAgentTest {
             res.Results.add(gRes);
         }
         Gson gson = new Gson();
-        try(FileWriter writer = new FileWriter("C:\\temp\\file.txt")) {
+        try(FileWriter writer = new FileWriter("C:\\temp\\tkomisarczyk_10_04.txt")) {
             String json = gson.toJson(res);
             writer.write(json);
         }
