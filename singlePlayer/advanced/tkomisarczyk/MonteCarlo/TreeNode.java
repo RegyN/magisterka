@@ -1,7 +1,9 @@
 package tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo;
 
 import core.game.StateObservation;
+import ontology.Types;
 import tools.Utils;
+import tracks.singlePlayer.advanced.tkomisarczyk.Position2D;
 import tracks.singlePlayer.advanced.tkomisarczyk.Utilities;
 
 import java.util.ArrayList;
@@ -54,6 +56,24 @@ public class TreeNode {
             if (obs.isGameOver())
                 break;
             int choice = generator.nextInt(actions.size());
+            obs.advance(actions.get(choice));
+        }
+        return Utilities.EvaluateState(obs, d);
+    }
+    
+    private int RollSimulationCleverly(StateObservation obs, Random generator){
+        var actions = obs.getAvailableActions();
+        int d = depth;
+        for (; d < maxDepth; d++) {
+            if (obs.isGameOver())
+                break;
+            int[] actionMap = new int[actions.size()];
+            int choiceSize = actions.size();
+            Position2D avatarPos = Position2D.getAvatarPosition(obs);
+            obs.getImmovablePositions()
+            for(int i=0; i<actions.size(); i++){
+                if(actions.get(i) == Types.ACTIONS.ACTION_UP &&)
+            }
             obs.advance(actions.get(choice));
         }
         return Utilities.EvaluateState(obs, d);

@@ -15,7 +15,7 @@ public class WinScoreHeuristic extends StateHeuristic {
     private static final double HUGE_NEGATIVE = -10000.0;
     private static final double HUGE_POSITIVE =  10000.0;
 
-    public WinScoreHeuristic() {
+    public WinScoreHeuristic(StateObservation obs) {
 
     }
 

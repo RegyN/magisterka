@@ -56,7 +56,7 @@ public class TreeNode {
                 var choice = generator.nextInt(actions.size());
                 stCopy.advance(actions.get(choice));
             }
-            StateHeuristic heuristic = new WinScoreHeuristic();
+            StateHeuristic heuristic = new WinScoreHeuristic(obs);
             result = heuristic.evaluateState(stCopy);
         }
         return result;

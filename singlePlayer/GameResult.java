@@ -6,15 +6,27 @@ public class GameResult {
     String GameName;
     int GameNumber;
     // {Win/Loss, Result, Timesteps}
-    ArrayList<PlayoutResult> Results;
+    public ArrayList<PlayoutResult> Results;
 
-    public void AddResult(double[] result, int lvl){
+    public void addResult(double[] result, int lvl){
         Results.add(new PlayoutResult(result, lvl));
+    }
+    
+    public void addResult(PlayoutResult res){
+        Results.add(res);
     }
 
     public GameResult(String name, int number){
         GameName = name;
         GameNumber = number;
         Results = new ArrayList<>();
+    }
+    
+    public int numberOfResults(){
+        return Results.size();
+    }
+    
+    public int numberOfResults(int level){
+        return (int)Results.stream().filter(p -> p.GameLevel == level).count();
     }
 }

@@ -9,44 +9,81 @@ import java.io.FileWriter;
 import java.util.Random;
 
 public class PerformAgentTest {
-    public static void main(String [] args){
-        String Controller = "tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo.Agent";
-        int[] gamesToPlay = {0, 10, 13, 18, 42, 60, 68, 80, 84, 100};
-        int[] levels = {0, 1};
-        int numTests = 10;
-        int numLevels = 1;
+    private static String FileToExtend;
+    private static String FileToSave;
+    private static String Controller;
+    private static int[] gamesToPlay;
+    private static int[] levelsToPlay;
+    private static int numTests;
+    private static Random generator;
+    private static Gson gson;
 
+    private static void setUpParameters(String[] args){
+        FileToExtend = "";
+        FileToSave = "D:\\Uczelnia\\Praca magisterska\\testy\\tkomisarczyk_15-04-v1_set1-short.txt";
+        //Controller = "tracks.singlePlayer.past.Return42.Agent";
+        Controller = "tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo.Agent";
+        gamesToPlay = new int[] {0, 10, 13, 18, 42, 60, 68, 80, 84, 100};
+        numTests = 10;
+        levelsToPlay = new int[] {0, 4};
+        generator = new Random();
+        gson = new Gson();
+    }
+
+    private static String[][] readGames(){
         String spGamesCollection =  "examples/all_games_sp.csv";
-        String[][] games = Utils.readGames(spGamesCollection);
+        return Utils.readGames(spGamesCollection);
+    }
 
-        Random generator = new Random();
-
+    private static TestResult prepareOldResults(){
         TestResult res = new TestResult(Controller);
-
-        for(int i=0; i< gamesToPlay.length; i++){
-            int gameIdx = gamesToPlay[i];
-            String gameName = games[gameIdx][1];
-            String game = games[gameIdx][0];
-            GameResult gRes = new GameResult(gameName, gameIdx);
-            for(int lev=0; lev < levels.length; lev++) {
-                int levelIdx = levels[lev];
-                for (int j = 0; j < numTests; j++){
-                    int seed = generator.nextInt();
-                    String level = game.replace(gameName, gameName + "_lvl" + 0);
-                    double[] score = ArcadeMachine.runOneGame(game, level, false, Controller, null, seed, 0);
-                    gRes.AddResult(score, levelIdx);
-                    System.out.println("Wykonano test " + j + " w grze " + gameIdx + " poziom " + levelIdx + ". Wynik to: " + score[0] + ", " + score[1] + ", " + score[2] + ".");
-                }
+        if(FileToExtend != null && !FileToExtend.equals("")){
+            try(FileReader reader = new FileReader(FileToExtend)) {
+                res = gson.fromJson(reader, TestResult.class);
             }
-            res.Results.add(gRes);
+            catch(Exception e){
+                System.out.println(e.getMessage());
+            }
         }
-        Gson gson = new Gson();
-        try(FileWriter writer = new FileWriter("C:\\temp\\tkomisarczyk_10_04.txt")) {
+        return res;
+    }
+
+    private static void saveResults(TestResult res, String name){
+        try(FileWriter writer = new FileWriter(name)) {
             String json = gson.toJson(res);
             writer.write(json);
         }
         catch(Exception e){
             System.out.println(e.getMessage());
         }
+    }
+
+    private static String getLevelName(String game, String gameName, int lvlNum){
+        return game.replace(gameName, gameName + "_lvl" + lvlNum);
+    }
+
+    public static void main(String [] args){
+        setUpParameters(args);
+        String[][] games = readGames();
+        var res = prepareOldResults();
+
+        for (int gameIdx : gamesToPlay) {
+            String gameName = games[gameIdx][1];
+            String game = games[gameIdx][0];
+            for (int levelIdx : levelsToPlay) {
+                for (int j = 0; j < numTests; j++) {
+                    System.out.println();
+
+                    int seed = generator.nextInt();
+                    String level = getLevelName(game, gameName, levelIdx);
+
+                    double[] score = ArcadeMachine.runOneGame(game, level, false, Controller, null, seed, 0);
+                    res.addResult(new PlayoutResult(score, levelIdx), gameIdx, gameName);
+
+                    System.out.println("Wykonano test " + j + " w grze " + gameIdx + " poziom " + levelIdx + ". Wynik to: " + score[0] + ", " + score[1] + ", " + score[2] + ".");
+                }
+            }
+        }
+        saveResults(res, FileToSave);
     }
 }

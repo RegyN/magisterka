@@ -14,17 +14,15 @@ public class Test {
 
     public static void main(String[] args) {
 
-		// Available tracks:
-		String sampleRandomController = "tracks.singlePlayer.simple.sampleRandom.Agent";
-		String doNothingController = "tracks.singlePlayer.simple.doNothing.Agent";
-		String sampleOneStepController = "tracks.singlePlayer.simple.sampleonesteplookahead.Agent";
-		String sampleFlatMCTSController = "tracks.singlePlayer.simple.greedyTreeSearch.Agent";
-
-		String sampleMCTSController = "tracks.singlePlayer.advanced.sampleMCTS.Agent";
-        String sampleRSController = "tracks.singlePlayer.advanced.sampleRS.Agent";
-        String sampleRHEAController = "tracks.singlePlayer.advanced.sampleRHEA.Agent";
-		String sampleOLETSController = "tracks.singlePlayer.advanced.olets.Agent";
-		String adrienController = "tracks.singlePlayer.advanced.adrienctx.Agent";
+		// Mistrzowie nowi:
+		String thorbjrn = "tracks.singlePlayer.past.thorbjrn.Agent";
+		String YOLOBOT = "tracks.singlePlayer.past.YOLOBOT.Agent";
+		String Return42 = "tracks.singlePlayer.past.Return42.Agent";
+		// Mistrzowie starzy:
+		String adrien = "tracks.singlePlayer.past.adrien.Agent";
+		String idealStandard = "tracks.singlePlayer.past.IdealStandard.Agent";
+		String Shmokin = "tracks.singlePlayer.past.Shmokin.Agent";
+		// Mistrzowie przyszli:
 		String tomekController = "tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo.Agent";
 
 		//Load available games
@@ -36,7 +34,7 @@ public class Test {
 		int seed = new Random().nextInt();
 
 		// Game and level to play
-		int gameIdx = 100;
+		int gameIdx = 63;
 		int levelIdx = 0; // level names from 0 to 4 (game_lvlN.txt).
 		String gameName = games[gameIdx][1];
 		for(int i=0; i<111; i++){
