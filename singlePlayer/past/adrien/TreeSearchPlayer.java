@@ -448,16 +448,16 @@ class TreeSearchPlayer {
 //        int i = 0;
 //        int j = 0;
 //
-//        if ((s1.getNPCPositions(s1.getAvatarPosition()) != null) && (s2.getNPCPositions(s2.getAvatarPosition()) != null)) {
-//            if (s1.getNPCPositions(s1.getAvatarPosition()).length != s2.getNPCPositions(s2.getAvatarPosition()).length) {
+//        if ((s1.getNPCPositions(s1.GetAvatarPosition()) != null) && (s2.getNPCPositions(s2.GetAvatarPosition()) != null)) {
+//            if (s1.getNPCPositions(s1.GetAvatarPosition()).length != s2.getNPCPositions(s2.GetAvatarPosition()).length) {
 //                return false;
 //            } else {
-//                while (i < s1.getNPCPositions(s1.getAvatarPosition()).length) {
-//                    if (s1.getNPCPositions(s1.getAvatarPosition())[i].size() != s2.getNPCPositions(s2.getAvatarPosition())[i].size()) {
+//                while (i < s1.getNPCPositions(s1.GetAvatarPosition()).length) {
+//                    if (s1.getNPCPositions(s1.GetAvatarPosition())[i].size() != s2.getNPCPositions(s2.GetAvatarPosition())[i].size()) {
 //                        return false;
 //                    } else {
-//                        while (j < s1.getNPCPositions(s1.getAvatarPosition())[i].size()) {
-//                            if (!s1.getNPCPositions(s1.getAvatarPosition())[i].get(j).equals(s2.getNPCPositions(s2.getAvatarPosition())[i].get(j))) {
+//                        while (j < s1.getNPCPositions(s1.GetAvatarPosition())[i].size()) {
+//                            if (!s1.getNPCPositions(s1.GetAvatarPosition())[i].get(j).equals(s2.getNPCPositions(s2.GetAvatarPosition())[i].get(j))) {
 //                                return false;
 //                            }
 //                            j++;

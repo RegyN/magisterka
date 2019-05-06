@@ -115,8 +115,8 @@ public class Node {
 			thisBoringness = Tools.boringPlaces[Tools.getPositionKey(thisState.getAvatarPosition())];
 		}
 		
-//		int initBoringness = Tools.boringPlaces[Tools.getPositionKey(initState.getAvatarPosition())];
-//		int thisBoringness = Tools.boringPlaces[Tools.getPositionKey(thisState.getAvatarPosition())];
+//		int initBoringness = Tools.boringPlaces[Tools.getPositionKey(initState.GetAvatarPosition())];
+//		int thisBoringness = Tools.boringPlaces[Tools.getPositionKey(thisState.GetAvatarPosition())];
 		
 
 		
@@ -131,7 +131,7 @@ public class Node {
 //			resDiff *= 95000;
 //		}
 		
-//		double distBetweenPos = initState.getAvatarPosition().dist(thisState.getAvatarPosition()) / (double)Tools.blockSize;
+//		double distBetweenPos = initState.GetAvatarPosition().dist(thisState.GetAvatarPosition()) / (double)Tools.blockSize;
 //		brngDiff *= distBetweenPos;
 		
 //		System.out.println("distBetweenPos: " + distBetweenPos);

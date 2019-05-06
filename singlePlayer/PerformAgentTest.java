@@ -20,12 +20,13 @@ public class PerformAgentTest {
 
     private static void setUpParameters(String[] args){
         FileToExtend = "";
-        FileToSave = "D:\\Uczelnia\\Praca magisterska\\testy\\tkomisarczyk_15-04-v1_set1-short.txt";
+        FileToSave = "cleverRollDumbExpand.txt";
+        FileToSave = "cleverRollDumbExpand.txt";
         //Controller = "tracks.singlePlayer.past.Return42.Agent";
         Controller = "tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo.Agent";
-        gamesToPlay = new int[] {0, 10, 13, 18, 42, 60, 68, 80, 84, 100};
+        gamesToPlay = new int[] {63};//, 18, 42, 60, 68, 80, 84, 100};
         numTests = 10;
-        levelsToPlay = new int[] {0, 4};
+        levelsToPlay = new int[] {0};
         generator = new Random();
         gson = new Gson();
     }

@@ -15,6 +15,6 @@ public class PlayoutResult {
         GameLevel = lvl;
         Status = input.length > 0 ? input[0] : 0;
         Score = input.length > 1 ? input[1] : 0;
-        Timesteps = input.length > 2 ? input[1] : 0;
+        Timesteps = input.length > 2 ? input[2] : 0;
     }
 }

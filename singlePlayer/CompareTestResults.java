@@ -22,7 +22,7 @@ public class CompareTestResults {
                 return false;
             }
             for(int j = 0; j < prototype.numberOfGames(); j++){
-                if(prototype.Results.get(i).GameNumber != compared.Results.get(i).GameNumber){
+                if(prototype.Results.get(j).GameNumber != compared.Results.get(j).GameNumber){
                     System.out.println("Difference found in " + i + " results gameNumber for game " + j + ".");
                     System.out.println("Expected " + prototype.Results.get(i).GameNumber + " found " + compared.Results.get(i).GameNumber + ".");
                     return false;
@@ -56,7 +56,9 @@ public class CompareTestResults {
     public static void main(String[] args){
         int[] scoring = new int[] {25, 18, 15, 12, 10, 8, 6, 4, 2, 1};
         String[] resultFiles = new String[]{
-                ""
+                "testDumb15LargePac.txt",
+                "testBetter15LargePac.txt",
+                "testClever15LargePac.txt"
         };
         ArrayList<TestResult> results = new ArrayList<>();
         Gson gson = new Gson();
