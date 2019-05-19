@@ -96,10 +96,6 @@ class TreeSearchPlayer {
         ticksSinceFrozen = 0;
         //rootNode.parentTree = this;
 
-
-
-//        updateLinearRegressionUsingDatabase();
-
         if (pastAvatarPositions[memoryIndex] != null) {
             sumOfPastX -= pastAvatarPositions[memoryIndex].x;
             sumOfPastY -= pastAvatarPositions[memoryIndex].y;
