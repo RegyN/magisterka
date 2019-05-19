@@ -18,10 +18,7 @@ class TreeSearchPlayer {
     private StateObservation rootObservation;
     private final Random randomGenerator;
     private final double epsilon;
-    public final boolean useValueApproximation;
-    public final ValueFunctionApproximator V_approximator;
     public final double discountFactor;
-    private final boolean approximation_featuresAreDeterministic;
     public final int nbCategories;
     private double maxResources;
     private double distancesNormalizer;
@@ -79,14 +76,6 @@ class TreeSearchPlayer {
             pastFeaturesGrid[i] = new IntArrayOfDoubleHashMap();
         }
 
-//        int lastActionPicked = -1;
-
-        useValueApproximation = false;
-
-        V_approximator = new ValueFunctionApproximator(nbCategories);
-
-        approximation_featuresAreDeterministic = true;
-
         visitedStates = new ArrayList<>();
     }
 
@@ -95,7 +84,6 @@ class TreeSearchPlayer {
 
         rootObservation = a_gameState.copy();
         int rootGameTick = rootObservation.getGameTick();
-        V_approximator.init(rootObservation);
         IntDoubleHashMap[] rootFeatures = getFeaturesFromStateObs(a_gameState);
         updatePastFeaturesGrid(rootFeatures);
 
@@ -111,14 +99,6 @@ class TreeSearchPlayer {
 
 
 //        updateLinearRegressionUsingDatabase();
-        if (useValueApproximation) {
-            V_approximator.updateTreeAttributes(rootFeatures);
-
-            if (rootGameTick % 1 == 0) {
-                V_approximator.updateBasisFunctionRegressionUsingDatabase();
-//                double currentCost = V_approximator.batchSquaredError(V_approximator.getWeights());
-            }
-        }
 
         if (pastAvatarPositions[memoryIndex] != null) {
             sumOfPastX -= pastAvatarPositions[memoryIndex].x;
@@ -196,15 +176,6 @@ class TreeSearchPlayer {
         //System.out.format("game tick is %d%n ", currentState.getGameTick());
         //loop navigating through the tree
         while (stayInTree) {
-//            features1 = currentStateNode.features;
-            if (useValueApproximation) {
-                if (approximation_featuresAreDeterministic) {
-                    features1 = currentStateNode.getCopyOfFeatures();
-                } else {
-                    features1 = getFeaturesFromStateObs(currentState);
-                }
-                visitedStatesFeatures.add(0, features1);
-            }
             score1 = getValueOfState(currentState);
             visitedStatesScores.add(0, score1);
 
@@ -233,15 +204,6 @@ class TreeSearchPlayer {
 //                features2 = currentStateNode.features;
                 score2 = getValueOfState(currentState);
                 instantReward = score2 - score1;
-                if (useValueApproximation) {
-                    features2 = getFeaturesFromStateObs(currentState);
-                    if (currentState.isGameOver() && currentState.getGameWinner() == Types.WINNER.PLAYER_LOSES) {
-                        int debugHere = 0;
-                    }
-                    V_approximator.addTransition(features1, currentAction, features2, instantReward, currentState.isGameOver());
-                    V_approximator.updateTreeAttributes(features1);
-                    V_approximator.updateTreeAttributes(features2);
-                }
 
                 stayInTree = false;
             }
@@ -260,15 +222,6 @@ class TreeSearchPlayer {
                 //currentStateNode.updateData(currentState.copy());
                 score2 = getValueOfState(currentState);
                 instantReward = score2 - score1;
-                if (useValueApproximation) {
-//                    features2 = V_approximator.getFeaturesFromStateObs(currentState);
-                    if (currentState.isGameOver() && currentState.getGameWinner() == Types.WINNER.PLAYER_LOSES) {
-                        int debugHere = 0;
-                    }
-                    V_approximator.addTransition(features1, currentAction, features2, instantReward, currentState.isGameOver());
-                    V_approximator.updateTreeAttributes(features1);
-//                    V_approximator.updateTreeAttributes(features2);
-                }
 
                 if (currentState.isGameOver()) {
                     stayInTree = false;

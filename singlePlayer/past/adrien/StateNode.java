@@ -124,12 +124,7 @@ class StateNode {
     }
 
     private double getNodeValue() {
-        if(parentTree.useValueApproximation){
-            return rawScore + parentTree.V_approximator.getBasisFunctionLinearApproximation(parentTree.V_approximator.getBasisFunctionsFromFeatures(features), parentTree.V_approximator.getWeights()) + locationBias * parentTree.getLocationBiasWeight() + barycenterBias * parentTree.getBarycenterBiasWeight() + featureGridBias * parentTree.getFeatureGridWeight();
-        }
-        else{
-            return rawScore + locationBias * parentTree.getLocationBiasWeight() + barycenterBias * parentTree.getBarycenterBiasWeight();
-        }
+        return rawScore + locationBias * parentTree.getLocationBiasWeight() + barycenterBias * parentTree.getBarycenterBiasWeight();
     }
 
     /**
@@ -229,20 +224,6 @@ class StateNode {
         //Updating gameOver count and score
         boolean gameOver = _state.isGameOver();
         double _rawScore = _state.getGameScore();
-
-        //////
-        if (parentTree.useValueApproximation) {
-            double cumulatedDiscountedScores = 0.0;
-            for (int i = 0; i < _visitedScores.size() - 1; i++) {
-                cumulatedDiscountedScores = parentTree.discountFactor * cumulatedDiscountedScores + (_visitedScores.get(i) - _visitedScores.get(i + 1));
-                if(false){
-                    parentTree.V_approximator.addTrajectory(_visitedFeatures.get(i + 1), _visitedFeatures.get(0), cumulatedDiscountedScores, gameOver);
-                }
-
-            }
-        }
-
-        //////
 
         if (gameOver) {
             this.numberOfExits += 1;
