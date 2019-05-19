@@ -14,8 +14,6 @@ import java.util.Random;
  */
 class ValueFunctionApproximator {
 
-//    private int[] nbTypesPerCategory;
-
     private final int nbWeights;
 
     private final int nbBasisPerType;
@@ -509,7 +507,6 @@ class ValueFunctionApproximator {
         return result;
     }
 
-
     public double getBasisFunctionLinearApproximation(IntArrayOfDoubleHashMap[] _basisFunctions, IntArrayOfDoubleHashMap[] theta) {
         double result = 0.0;
         for (int i = 0; i < _basisFunctions.length; i++) {
@@ -596,7 +593,6 @@ class ValueFunctionApproximator {
             weights[7].get(0)[k] = 0.0;
         }
     }
-
 
     private double modelCostForOneObservation(IntArrayOfDoubleHashMap[] theta, Transition _transition) {
         double cost;

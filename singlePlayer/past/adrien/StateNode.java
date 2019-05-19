@@ -59,15 +59,6 @@ class StateNode {
 
     private Vector2d orientation;
 
-//    private double stateIsAlreadyInTheTree;
-
-    // /**
-    //  * Creates a new empty state node
-    //  */
-//    public StateNode(int _parentAction) {
-//        parentAction = _parentAction;
-//    }
-
     /**
      * Creates a new state node with one single state encountered
      *
@@ -133,19 +124,12 @@ class StateNode {
     }
 
     private double getNodeValue() {
-        //return (rawScore - distanceToClosestResource + (double)totalAvatarResources/4.0 - locationBias);
-        //return (rawScore + parentTree.featureWeights[3]*distanceToClosestResource + parentTree.featureWeights[1]*distanceToClosestMovable + parentTree.featureWeights[2]*(double)totalAvatarResources + parentTree.featureWeights[0]*locationBias + parentTree.featureWeights[4]*distanceToClosestPortal);
-
-        //return rawScore + parentTree.getLogisticValueApproximation(parentTree.getFeatureVectorFromStateObs(encounteredStates.get(0)));
-//        return rawScore + parentTree.getLinearRegression(parentTree.normalizeFeatures(parentTree.getFeatureVectorFromStateObs(encounteredStates.get(0)) ));
         if(parentTree.useValueApproximation){
             return rawScore + parentTree.V_approximator.getBasisFunctionLinearApproximation(parentTree.V_approximator.getBasisFunctionsFromFeatures(features), parentTree.V_approximator.getWeights()) + locationBias * parentTree.getLocationBiasWeight() + barycenterBias * parentTree.getBarycenterBiasWeight() + featureGridBias * parentTree.getFeatureGridWeight();
         }
         else{
             return rawScore + locationBias * parentTree.getLocationBiasWeight() + barycenterBias * parentTree.getBarycenterBiasWeight();
         }
-        //        return rawScore + features[0].get(0);
-//        return rawScore + parentTree.getKNNValue(features) + features[0].get(0) + resourceBias;
     }
 
     /**
@@ -158,10 +142,6 @@ class StateNode {
 
         StateNode newStateNode = new StateNode(_currentObservation, randomGenerator, this);
 
-//        if (newStateNode.features[2][0] > this.parentTree.maxResources) {
-//            this.parentTree.maxResources = newStateNode.features[2][0];
-//        }
-
         //use the new state to create the action node
         newStateNode.parentAction = actionIndex;
         children[actionIndex] = newStateNode;
@@ -169,10 +149,7 @@ class StateNode {
 
         return newStateNode;
     }
-
-    /**
-     * returns the selected action node
-     */
+    
     public int selectRandomAction() {
         //now, we just select a random action - TODO: make this better (UCB, expectimax, etc)
         int bestActionIndex = 0;
@@ -187,10 +164,7 @@ class StateNode {
         }
         return bestActionIndex;
     }
-
-    /**
-     * returns the selected action node
-     */
+    
     public int selectAction() {
         //now, we just select a random action - TODO: make this better (UCB, expectimax, etc)
         int bestActionIndex = 0;
@@ -223,18 +197,6 @@ class StateNode {
 
     }
 
-    // public double getActionValue(int actionIndex)
-    // {
-    //     return ((1.0 - 0.0/(double)actionNbSimulations[actionIndex])*(actionChildren[actionIndex].expectimax - actionChildren[actionIndex].stateNodeChild.locationBias) + 0.0*biasForActionSelection[actionIndex]/(double)actionNbSimulations[actionIndex]);
-    // }
-
-    /**
-     * Updates the data stored in this state node - TODO: store more than just
-     * state observations; should also store instant values
-     */
-    public void updateData(StateObservation _state) {
-        encounteredStates.add(_state);
-    }
 
     public int getMostVisitedAction() {
         //System.out.format("selecting the best action from TreeSearch : %n");
@@ -247,9 +209,6 @@ class StateNode {
                 bestNumberOfVisits = (double) actionNbSimulations[i];
             }
         }
-//        if (encounteredStates.get(0).getGameTick() > 0) {
-//            printTree(0);
-//        }
         return bestActionIndex;
     }
 
@@ -263,9 +222,6 @@ class StateNode {
                 bestScore = actionScores[i] + x / 100000.0;
             }
         }
-        //if (encounteredStates.get(0).getGameTick() > 50) {
-//            printTree(0);
-        //}
         return bestActionIndex;
     }
 
@@ -342,51 +298,7 @@ class StateNode {
             currentNode = currentNode.parentNode;
         }
     }
-
-    public void puzzleBackProp() {
-        //Updating gameOver count and score
-        StateObservation _state = this.encounteredStates.get(0);
-        boolean gameOver = _state.isGameOver();
-        double _rawScore = _state.getGameScore();
-        StateNode currentNode = this;
-
-        if (gameOver) {
-            this.numberOfExits += 1;
-            cumulatedValueOnExit += parentTree.getValueOfState(_state);
-            currentNode.maxScore = parentTree.getValueOfState(_state);
-        }
-        else{
-            currentNode.maxScore = _rawScore;
-        }
-
-
-        while (currentNode != null) {
-            currentNode.numberOfSimulations += 1;
-            if (!currentNode.isLeaf()) {
-                double bestScore = HUGE_NEGATIVE;
-                for (int i = 0; i < currentNode.children.length; i++) {
-                    if (currentNode.children[i] != null) {
-                        if (currentNode.actionScores[i] > bestScore) {
-                            bestScore = currentNode.actionScores[i];
-                        }
-                    }
-                }
-                if(bestScore > currentNode.maxScore){
-                    currentNode.maxScore = 1.0 * bestScore;
-                }
-            }
-
-            if (currentNode.parentNode != null) {
-                int _actionIndex = currentNode.parentAction;
-                currentNode.parentNode.actionScores[_actionIndex] = currentNode.maxScore;
-                if(!currentNode.notFullyExpanded()){
-                    currentNode.parentNode.actionPruned[_actionIndex] = currentNode.allChildrenPruned();
-                }
-            }
-
-            currentNode = currentNode.parentNode;
-        }
-    }
+    
     /**
      * returns true if and only if the
      */
@@ -399,15 +311,6 @@ class StateNode {
         return false;
     }
 
-    public boolean allChildrenPruned(){
-        for (boolean b : actionPruned){
-            if(b == false){
-                return false;
-            }
-        }
-        return true;
-    }
-
     /**
      * returns true if and only if the
      */
@@ -418,24 +321,6 @@ class StateNode {
             }
         }
         return true;
-    }
-
-    public void printTree(int depth) {
-        System.out.format("%n ##### Printing tree at depth %d and nbsims %d %n", depth, numberOfSimulations);
-//        System.out.format("parent rawScore, toRes, toMov, AvatRes, locationBias, nodeV, tick : %f, %f, %f, %d, %f, %f, %d", rawScore, distanceToClosestResource, distanceToClosestMovable, totalAvatarResources, locationBias, this.getNodeValue(), encounteredStates.get(0).getGameTick());
-        for (int i = 0; i < children.length; i++) {
-            if (children[i] != null) {
-                System.out.format("%n ~~~~~~~~~~~~ action number %d :", i);
-                System.out.format("%n nbSims, score, avgOnExit, PassingV, maxScore, nbExists, nodeValue, tick: %d, %f, %f, %f, %f, %d, %f, %d", actionNbSimulations[i], actionScores[i], children[i].cumulatedValueOnExit / (double) children[i].numberOfExits, children[i].passingValue, children[i].maxScore, children[i].numberOfExits, children[i].getNodeValue(), children[i].encounteredStates.get(0).getGameTick());
-////                System.out.format("%n rawScore, toRes, toMov, AvatRes, locationBias, toPort: %f, %f, %f, %d, %f, %f", children[i].rawScore, children[i].distanceToClosestResource, children[i].distanceToClosestMovable, children[i].totalAvatarResources, children[i].locationBias, children[i].distanceToClosestPortal);
-////                //System.out.format("%n nbSims, , nExits, avgValue on exit, locationBias, toRes, toMov, Res : %d, %f, %f, %d, %f, %f, %f, %f, %d ",actionNbSimulations[i],biasForActionSelection[i],actionChildren[i].expectimax,actionChildren[i].stateNodeChild.numberOfExits,actionChildren[i].stateNodeChild.cumulatedValueOnExit/(double)actionChildren[i].stateNodeChild.numberOfExits,actionChildren[i].stateNodeChild.locationBias,actionChildren[i].stateNodeChild.distanceToClosestResource,actionChildren[i].stateNodeChild.distanceToClosestMovable, actionChildren[i].stateNodeChild.totalAvatarResources);
-////                if (depth < 1) {
-////                    //    actionChildren[i].stateNodeChild.printTree(depth+1);
-////                }
-//////                System.out.format("%n features ");
-//////                System.out.format(Arrays.toString(children[i].features));
-            }
-        }
     }
 
     public double getActionScore(int index){

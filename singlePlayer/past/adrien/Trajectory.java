@@ -10,22 +10,14 @@ package tracks.singlePlayer.past.adrien;
  */
 class Trajectory {
 
-//    private final double reward;
-
     public final boolean isFinal;
-
-//    private final int length;
 
     public final IntArrayOfDoubleHashMap[] basisFunctionValues1;
 
     public final IntArrayOfDoubleHashMap[] basisFunctionValues2;
 
     public Trajectory(boolean _final, IntArrayOfDoubleHashMap[] _bf1, IntArrayOfDoubleHashMap[] _bf2) {
-//        IntDoubleHashMap[] features1 = _f1;
-//        IntDoubleHashMap[] features2 = _f2;
-//        reward = _r;
         isFinal = _final;
-//        length = _length;
         basisFunctionValues1 = _bf1;
         basisFunctionValues2 = _bf2;
     }

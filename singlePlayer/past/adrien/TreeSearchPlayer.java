@@ -4,8 +4,6 @@
  */
 package tracks.singlePlayer.past.adrien;
 
-//import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
-
 import core.game.Observation;
 import core.game.StateObservation;
 
@@ -16,77 +14,35 @@ import java.util.*;
 
 class TreeSearchPlayer {
 
-    // --Commented out by Inspection (23/10/15 14:41):public boolean gameIsPuzzle;
-
-    // --Commented out by Inspection (23/10/15 14:41):public int age;
-
-    /**
-     * Root of the tree.
-     */
     private StateNode rootNode;
-
-    /**
-     * Root of the tree.
-     */
     private StateObservation rootObservation;
-
-    /**
-     * Random generator.
-     */
     private final Random randomGenerator;
-
     private final double epsilon;
-
     public final boolean useValueApproximation;
-
     public final ValueFunctionApproximator V_approximator;
-
     public final double discountFactor;
-
     private final boolean approximation_featuresAreDeterministic;
-
     public final int nbCategories;
-
     private double maxResources;
-
     private double distancesNormalizer;
-
     private int nbGridBuckets;
-
     private IntArrayOfDoubleHashMap[] pastFeaturesGrid;
-
     private double maxNbFeatures;
-
     private final int memoryLength;
-
     private final Vector2d[] pastAvatarPositions;
-
     private final Vector2d[] pastAvatarOrientations;
-
     private final double[] pastScores;
-
     private final double[] pastGameTicks;
-
     private double sumOfPastX;
-
     private double sumOfPastY;
-
     private int nbMemorizedPositions;
-
     private Vector2d barycenter;
-
     private double locationBiasWeight;
-
     private double barycenterBiasWeight;
-
     private double featureGridWeight;
-
     private int memoryIndex;
-
     private boolean frozen;
-
     public int ticksSinceFrozen;
-
     public ArrayList<StateObservation> visitedStates;
     /**
      * Creates the MCTS player with a sampleRandom generator object.
@@ -134,13 +90,7 @@ class TreeSearchPlayer {
         visitedStates = new ArrayList<>();
     }
 
-    /**
-     * Inits the tree with the new observation state in the root.
-     *
-     * @param a_gameState current state of the game.
-     */
     public void init(StateObservation a_gameState) {
-//        age = 0;
         distancesNormalizer = Math.sqrt((Math.pow(a_gameState.getWorldDimension().getHeight() + 1.0, 2) + Math.pow(a_gameState.getWorldDimension().getWidth() + 1.0, 2)));
 
         rootObservation = a_gameState.copy();
@@ -227,11 +177,7 @@ class TreeSearchPlayer {
 
 
     }
-
-
-    /**
-     * Runs one iteration of tree search
-     */
+    
     public void iterate() {
         ArrayList<IntDoubleHashMap[]> visitedStatesFeatures = new ArrayList<>();
         ArrayList<Double> visitedStatesScores = new ArrayList<>();
@@ -298,7 +244,8 @@ class TreeSearchPlayer {
                 }
 
                 stayInTree = false;
-            } else {
+            }
+            else {
                 //select an action
                 double x = randomGenerator.nextDouble();
                 currentAction = currentStateNode.selectAction();
@@ -307,17 +254,11 @@ class TreeSearchPlayer {
                 }
                 currentStateNode.actionNbSimulations[currentAction] += 1;
                 currentStateNode = currentStateNode.children[currentAction];
-
-                if (true) {   //TODO: refine this condition to something that triggers calling the forward model
-                    currentState.advance(Agent.actions[currentAction]); //updates the current state with the forward model
-                    //currentStateNode.updateData(currentState.copy());
-                } else {
-                    currentState = currentStateNode.encounteredStates.get(0);
-                }
-
-//                features2 = currentStateNode.features;
+    
+                //TODO: refine this condition to something that triggers calling the forward model
+                currentState.advance(Agent.actions[currentAction]); //updates the current state with the forward model
+                //currentStateNode.updateData(currentState.copy());
                 score2 = getValueOfState(currentState);
-                //featureFunctions2 = getFeatureFunctionsFromFeatures(features2);
                 instantReward = score2 - score1;
                 if (useValueApproximation) {
 //                    features2 = V_approximator.getFeaturesFromStateObs(currentState);
@@ -341,140 +282,7 @@ class TreeSearchPlayer {
 
         currentStateNode.backPropagateData(currentState, visitedStatesFeatures, visitedStatesScores);
     }
-
-    public void puzzleIterate() {
-        //initialize useful variables
-        StateObservation currentState = rootObservation.copy();
-        StateNode currentStateNode = rootNode;
-        int currentAction = 0;
-        boolean stayInTree = true;
-
-        //System.out.format("game tick is %d%n ", currentState.getGameTick());
-        //loop navigating through the tree
-        int roottick = rootObservation.getGameTick();
-        int stateTick = currentState.getGameTick();
-        while (stayInTree) {
-            stateTick = currentState.getGameTick();
-            if (currentStateNode.notFullyExpanded()) {
-                //add a new action
-                int bestActionIndex = 0;
-                if ((currentStateNode.numberOfSimulations < 2) && (currentStateNode.parentNode != null)) {
-                    bestActionIndex = currentStateNode.parentAction;
-                } else {
-                    double bestValue = -1;
-                    for (int i = 0; i < currentStateNode.children.length; i++) {
-                        double x = randomGenerator.nextDouble();
-                        if ((x > bestValue) && (currentStateNode.children[i] == null)) {
-                            bestActionIndex = i;
-                            bestValue = x;
-                        }
-                    }
-                }
-                StateObservation stateForNewNode = currentState.copy();
-                stateForNewNode.advance(Agent.actions[bestActionIndex]);
-//                MyStateObservation myStateForNewNode = new MyStateObservation(stateForNewNode);
-                if(!isStateAlreadyVisited(stateForNewNode)){
-                    visitedStates.add(stateForNewNode);
-                    currentStateNode.actionPruned[bestActionIndex] = false;
-                }
-//                if(!isStateAlreadyVisited(stateForNewNode)){
-//                    visitedStates.add(stateForNewNode);
-////                    System.out.format("new state added, number %d \n", visitedStates.size());
-//                    currentStateNode.actionPruned[bestActionIndex] = false;
-//                }
-                else{
-                    currentStateNode.actionPruned[bestActionIndex] = true;
-                }
-                currentStateNode = currentStateNode.addStateNode(stateForNewNode, bestActionIndex);
-//                if(areTwoStatesEqual(stateForNewNode, currentStateNode.parentNode.encounteredStates.get(0))){
-//                    currentStateNode.parentNode.actionPruned[bestActionIndex] = true;
-//                }
-//                else{
-//                    currentStateNode.parentNode.actionPruned[bestActionIndex] = false;
-//                }
-                stayInTree = false;
-            } else {
-                //select an action
-                boolean pickedActionIsPruned = true;
-                double x;
-                int maxNbAttempts = 30;
-                int nbAttempts = 0;
-                while(pickedActionIsPruned && maxNbAttempts>nbAttempts){
-                    nbAttempts += 1;
-                    x = randomGenerator.nextDouble();
-                    currentAction = currentStateNode.selectAction();
-                    if (x < epsilon) {
-                        currentAction = currentStateNode.selectRandomAction();
-                    }
-                    if(!currentStateNode.actionPruned[currentAction]){
-                        pickedActionIsPruned = false;
-                    }
-                }
-
-                currentStateNode.actionNbSimulations[currentAction] += 1;
-                currentStateNode = currentStateNode.children[currentAction];
-                currentState = currentStateNode.encounteredStates.get(0);
-                if (currentState.isGameOver()) {
-                    stayInTree = false;
-                }
-            }
-        }
-        //backpropagate the score observed when leaving the tree
-        currentStateNode.puzzleBackProp();
-    }
-//    /**
-//     * Checks if the game is a puzzle
-//     *
-//     * @return the action to execute in the game.
-//     */
-//    public boolean checkIfGameIsPuzzle() {
-//        ArrayList<Types.ACTIONS> actionList = rootObservation.getAvailableActions(true);
-//        Types.ACTIONS[] _actions = new Types.ACTIONS[actionList.size()];
-//
-//        for (int i = 0; i < _actions.length; ++i) {
-//            _actions[i] = actionList.get(i);
-//        }
-//
-//        //System.out.format("actions length %d ", _actions.length);
-//        StateObservation currentState = rootObservation.copy();
-//        currentState.advance(_actions[0]);
-//
-//        return compareTwoStates(currentState, rootObservation);
-//        //Determine the best action to take and return it.
-//    }
-
-//    public boolean compareTwoStates(StateObservation s1, StateObservation s2) {
-//
-//        int i = 0;
-//        int j = 0;
-//
-//        if ((s1.getNPCPositions(s1.GetAvatarPosition()) != null) && (s2.getNPCPositions(s2.GetAvatarPosition()) != null)) {
-//            if (s1.getNPCPositions(s1.GetAvatarPosition()).length != s2.getNPCPositions(s2.GetAvatarPosition()).length) {
-//                return false;
-//            } else {
-//                while (i < s1.getNPCPositions(s1.GetAvatarPosition()).length) {
-//                    if (s1.getNPCPositions(s1.GetAvatarPosition())[i].size() != s2.getNPCPositions(s2.GetAvatarPosition())[i].size()) {
-//                        return false;
-//                    } else {
-//                        while (j < s1.getNPCPositions(s1.GetAvatarPosition())[i].size()) {
-//                            if (!s1.getNPCPositions(s1.GetAvatarPosition())[i].get(j).equals(s2.getNPCPositions(s2.GetAvatarPosition())[i].get(j))) {
-//                                return false;
-//                            }
-//                            j++;
-//                        }
-//                    }
-//                    i++;
-//                }
-//            }
-//        }
-//        return true;
-//    }
-
-    /**
-     * Fetches the best action, according to the current tree.
-     *
-     * @return the action to execute in the game.
-     */
+    
     public int returnBestAction() {
         //Determine the best action to take and return it.
 //        return rootNode.getHighestScoreAction();
@@ -684,7 +492,8 @@ class TreeSearchPlayer {
     public double getFeatureGridWeight(){
         return featureGridWeight;
     }
-
+    
+    /*
     public void freezeTree() {this.frozen = true;}
 
     public void deFrost() {this.frozen = false;}
@@ -709,6 +518,7 @@ class TreeSearchPlayer {
             return result;
         }
     }
+    
     public boolean areTwoStatesEqual(StateObservation s1, StateObservation s2) {
 
         Vector2d pos1 = s1.getAvatarPosition();
@@ -787,4 +597,5 @@ class TreeSearchPlayer {
     public double getHighestScoreFromRoot(){
         return rootNode.getActionScore(rootNode.getHighestScoreAction());
     }
+    */
 }
