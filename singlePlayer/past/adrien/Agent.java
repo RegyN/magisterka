@@ -19,7 +19,6 @@ public class Agent extends AbstractPlayer {
     
     public static int NUM_ACTIONS;
     public static Types.ACTIONS[] actions;
-//    private boolean gameIsPuzzle;
     
     /**
      * Random generator for the agent.

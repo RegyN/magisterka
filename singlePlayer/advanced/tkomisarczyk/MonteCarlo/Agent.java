@@ -37,7 +37,7 @@ public class Agent extends AbstractPlayer {
     private void ExtractKnowledge(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
         knowledge.GatherStaticInfo(stateObs);
         if(knowledge.type == GameType.Planar2D){
-            knowledge.GetherSpriteInfoRandomly(stateObs, elapsedTimer);
+            knowledge.GatherSpriteInfoRandomly(stateObs, elapsedTimer);
         }
     }
 
@@ -57,7 +57,7 @@ public class Agent extends AbstractPlayer {
     }
 
     private Types.ACTIONS ChooseBestAction(TreeNode root) {
-        return root.GetBestScoreAction(knowledge.type == GameType.Planar2D);
+        return root.GetMostVisitedAction(knowledge.type == GameType.Planar2D);
     }
 
     @Override
@@ -90,7 +90,7 @@ public class Agent extends AbstractPlayer {
 //        System.out.println(avgTimeTaken);
         turnNumber++;
         var chosen = ChooseBestAction(root);
-        System.out.println(chosen.name());
+//        System.out.println(chosen.name());
         return chosen;
     }
 }

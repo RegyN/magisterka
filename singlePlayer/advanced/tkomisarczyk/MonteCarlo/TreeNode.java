@@ -190,7 +190,7 @@ public class TreeNode {
         if(actions.size() <= 0){  // Czasami z powodu niedeterminizmu gra kończy się wcześniej niż by się można spodziewać. Wtedy wracamy do korzenia.
             var result = Utilities.EvaluateState(obs);
             UpdateScoreUpwards(result);
-            System.out.print(".");
+            //System.out.print(".");
             return;
         }
 
@@ -228,7 +228,7 @@ public class TreeNode {
         if(actions.size() <= 0){  // Czasami z powodu niedeterminizmu gra kończy się wcześniej niż by się można spodziewać. Wtedy wracamy do korzenia.
             var result = Utilities.EvaluateState(obs);
             UpdateScoreUpwards(result);
-            System.out.print(".");
+            //System.out.print(".");
             return;
         }
 
@@ -261,6 +261,12 @@ public class TreeNode {
                 children.add(null);
                 childActions.add(actions.get(i));
             }
+            if(childActions.size() <= 0){
+                var result = Utilities.EvaluateState(obs);
+                UpdateScoreUpwards(result);
+                //System.out.print(",");
+                return;
+            }
             int choice = generator.nextInt(childActions.size());
             obs.advance(childActions.get(choice));
             children.set(choice, new TreeNode(this, obs));
@@ -273,6 +279,12 @@ public class TreeNode {
             uninitiatedChildren--;
         }
         else {
+            if(childActions.size() <= 0){
+                var result = Utilities.EvaluateState(obs);
+                UpdateScoreUpwards(result);
+                //System.out.print(",");
+                return;
+            }
             int choice = ChooseChildToExpandUct(obs);
             obs.advance(childActions.get(choice));
             children.get(choice).ExpandIntelligently(obs);
@@ -353,8 +365,8 @@ public class TreeNode {
         return childActions.get(GetBestAverageIndex());
     }
 
-    public Types.ACTIONS GetMostVisitedAction() {
-        return childActions.get(GetMostVisitedIndex());
+    public Types.ACTIONS GetMostVisitedAction(boolean useHistory) {
+        return childActions.get(GetMostVisitedIndex(useHistory));
     }
 
     public  int GetBestScoreIndex(boolean useHistory){
@@ -364,7 +376,7 @@ public class TreeNode {
         var history = PositionHistory.GetInstance();
         var correctionFactor = 0.8;
         var avatarPos = Position2D.GetAvatarPosition(state);
-        double max = Double.MIN_VALUE;
+        double max = -Double.MAX_VALUE;
         int maxIndex = 0;
         for (int i = 0; i < children.size(); i++) {
             if (children.get(i) == null) {
@@ -388,7 +400,7 @@ public class TreeNode {
                     newPosition = new Position2D(avatarPos.x + 1, avatarPos.y);
                 }
                 if(history.Contains(newPosition)){
-                    score = (int)(score * correctionFactor);
+                    score = score > 0 ? (int)(score * correctionFactor) : (int)(score / correctionFactor);
                 }
                 if(score > max){
                     max = score;
@@ -440,6 +452,45 @@ public class TreeNode {
             if (children.get(i).numTests > max) {
                 max = children.get(i).numTests;
                 maxIndex = i;
+            }
+        }
+        return maxIndex;
+    }
+    
+    public int GetMostVisitedIndex(boolean useHistory){
+        if(!useHistory || !IsRoot()){
+            return GetBestScoreIndex();
+        }
+        var history = PositionHistory.GetInstance();
+        var avatarPos = Position2D.GetAvatarPosition(state);
+        double max = -Double.MAX_VALUE;
+        int maxIndex = 0;
+        for (int i = 0; i < children.size(); i++) {
+            if (children.get(i) == null) {
+                continue;
+            }
+            var score = Utilities.DisturbScore(children.get(i).numTests);
+            if(score > max){
+                var action = childActions.get(i);
+                Position2D newPosition = avatarPos;
+                //Jeśli nie ma go w historii, to mamy nowy max.
+                if(action == Types.ACTIONS.ACTION_UP){
+                    newPosition = new Position2D(avatarPos.x, avatarPos.y - 1);
+                }
+                else if(action == Types.ACTIONS.ACTION_DOWN){
+                    newPosition = new Position2D(avatarPos.x, avatarPos.y + 1);
+                }
+                else if(action == Types.ACTIONS.ACTION_LEFT){
+                    newPosition = new Position2D(avatarPos.x - 1, avatarPos.y);
+                }
+                else if(action == Types.ACTIONS.ACTION_RIGHT){
+                    newPosition = new Position2D(avatarPos.x + 1, avatarPos.y);
+                }
+                score = score - history.Count(newPosition);
+                if(score > max){
+                    max = score;
+                    maxIndex = i;
+                }
             }
         }
         return maxIndex;

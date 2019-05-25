@@ -28,7 +28,7 @@ public class PositionHistory {
     public static void Reset(){
         instance = new PositionHistory();
     }
-
+    
     public boolean Contains(Position2D position){
         for(var p : Positions){
             if(p.Equals(position)){
@@ -36,6 +36,16 @@ public class PositionHistory {
             }
         }
         return false;
+    }
+    
+    public int Count(Position2D position){
+        int count = 0;
+        for(var p : Positions){
+            if(p.Equals(position)){
+                count++;
+            }
+        }
+        return count;
     }
 
     public void Add(Position2D position){

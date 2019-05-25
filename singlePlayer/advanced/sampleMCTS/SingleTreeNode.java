@@ -73,7 +73,7 @@ public class SingleTreeNode {
             avgTimeTaken = acumTimeTaken / numIters;
             remaining = elapsedTimer.remainingTimeMillis();
         }
-        System.out.println(numIters);
+        //System.out.println(numIters);
     }
 
     /**

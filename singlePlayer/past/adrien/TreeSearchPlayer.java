@@ -18,8 +18,8 @@ class TreeSearchPlayer {
     private StateObservation rootObservation;
     private final Random randomGenerator;
     private final double epsilon;
-    public final double discountFactor;
-    public final int nbCategories;
+    final double discountFactor;
+    final int nbCategories;
     private double maxResources;
     private double distancesNormalizer;
     private int nbGridBuckets;
@@ -27,26 +27,20 @@ class TreeSearchPlayer {
     private double maxNbFeatures;
     private final int memoryLength;
     private final Vector2d[] pastAvatarPositions;
-    private final Vector2d[] pastAvatarOrientations;
     private final double[] pastScores;
     private final double[] pastGameTicks;
-    private double sumOfPastX;
-    private double sumOfPastY;
     private int nbMemorizedPositions;
     private Vector2d barycenter;
     private double locationBiasWeight;
     private double barycenterBiasWeight;
-    private double featureGridWeight;
     private int memoryIndex;
-    private boolean frozen;
-    public int ticksSinceFrozen;
-    public ArrayList<StateObservation> visitedStates;
+    
     /**
      * Creates the MCTS player with a sampleRandom generator object.
      *
      * @param a_rnd sampleRandom generator object.
      */
-    public TreeSearchPlayer(Random a_rnd) {
+    TreeSearchPlayer(Random a_rnd) {
         randomGenerator = a_rnd;
         epsilon = 0.35;
         discountFactor = 0.9;
@@ -58,51 +52,29 @@ class TreeSearchPlayer {
         memoryIndex = 0;
         memoryLength = 500;
         pastAvatarPositions = new Vector2d[memoryLength];
-        pastAvatarOrientations = new Vector2d[memoryLength];
         pastScores = new double[memoryLength];
         pastGameTicks = new double[memoryLength];
-        sumOfPastX = 0.;
-        sumOfPastY = 0.;
         nbMemorizedPositions = 0;
         barycenter = new Vector2d();
         locationBiasWeight = 0.;
         barycenterBiasWeight = 0.;
-        featureGridWeight = 0.5;
-
-        frozen = false;
-
+    
         pastFeaturesGrid = new IntArrayOfDoubleHashMap[nbCategories];
         for (int i = 0; i < nbCategories; i++) {
             pastFeaturesGrid[i] = new IntArrayOfDoubleHashMap();
         }
-
-        visitedStates = new ArrayList<>();
     }
 
     public void init(StateObservation a_gameState) {
         distancesNormalizer = Math.sqrt((Math.pow(a_gameState.getWorldDimension().getHeight() + 1.0, 2) + Math.pow(a_gameState.getWorldDimension().getWidth() + 1.0, 2)));
 
         rootObservation = a_gameState.copy();
-        int rootGameTick = rootObservation.getGameTick();
         IntDoubleHashMap[] rootFeatures = getFeaturesFromStateObs(a_gameState);
         updatePastFeaturesGrid(rootFeatures);
 
         rootNode = new StateNode(rootObservation, randomGenerator, this);
 
-        //TODO : when I implement a "keep tree when in puzzle", no more need to reinitialize the visitedStates list
-        visitedStates = new ArrayList<>();
-//        MyStateObservation myRootObservation = new MyStateObservation(rootObservation);
-        visitedStates.add(rootObservation);
-        ticksSinceFrozen = 0;
-        //rootNode.parentTree = this;
-
-        if (pastAvatarPositions[memoryIndex] != null) {
-            sumOfPastX -= pastAvatarPositions[memoryIndex].x;
-            sumOfPastY -= pastAvatarPositions[memoryIndex].y;
-        }
         pastAvatarPositions[memoryIndex] = a_gameState.getAvatarPosition();
-        sumOfPastX += pastAvatarPositions[memoryIndex].x;
-        sumOfPastY += pastAvatarPositions[memoryIndex].y;
         if (nbMemorizedPositions < memoryLength) {
             nbMemorizedPositions += 1;
         }
@@ -111,20 +83,38 @@ class TreeSearchPlayer {
             double lambda = 0.15;
             Vector2d pastBarycenter = barycenter;
             Vector2d newPosition = new Vector2d(pastAvatarPositions[memoryIndex]);
-            Vector2d newBarycenter = new Vector2d(lambda * newPosition.x + (1. - lambda) * pastBarycenter.x, lambda * newPosition.y + (1. - lambda) * pastBarycenter.y);
-//          barycenter.set(sumOfPastX/nbMemorizedPositions, sumOfPastY/nbMemorizedPositions);
-            barycenter = newBarycenter;
+            barycenter = new Vector2d(lambda * newPosition.x + (1. - lambda) * pastBarycenter.x, lambda * newPosition.y + (1. - lambda) * pastBarycenter.y);
         } else {
             barycenter = new Vector2d(pastAvatarPositions[memoryIndex]);
         }
 
         pastScores[memoryIndex] = a_gameState.getGameScore();
         pastGameTicks[memoryIndex] = a_gameState.getGameTick();
+        
+        if (nbMemorizedPositions > 1) {
+            double lambda = 0.15;
+            Vector2d pastBarycenter = barycenter;
+            Vector2d newPosition = new Vector2d(pastAvatarPositions[memoryIndex]);
+            Vector2d newBarycenter = new Vector2d(lambda * newPosition.x + (1. - lambda) * pastBarycenter.x, lambda * newPosition.y + (1. - lambda) * pastBarycenter.y);
+            barycenter = newBarycenter;
+        } else {
+            barycenter = new Vector2d(pastAvatarPositions[memoryIndex]);
+        }
+    
+        locationBiasWeight = calculateLocationBiasWeight();
 
+        if (memoryIndex < memoryLength - 1) {
+            memoryIndex += 1;
+        } else {
+            memoryIndex = 0;
+        }
+    }
+    
+    double calculateLocationBiasWeight(){
         double scoreMean = 0.;
         double nbScores = 0.;
         double scoreVariance = 0.;
-
+    
         for (double x : pastScores) {
             scoreMean += x;
             nbScores += 1.;
@@ -134,27 +124,11 @@ class TreeSearchPlayer {
             scoreVariance += Math.pow(x - scoreMean, 2.);
         }
         scoreVariance = scoreVariance / nbScores;
-
-//        if(false){
-        if (scoreVariance > 0.001) {
-            barycenterBiasWeight = 0.005;
-            locationBiasWeight = 0.001;
-        } else {
-            locationBiasWeight = 0.25;
-            barycenterBiasWeight = 0.005;
-        }
-
-        pastAvatarOrientations[memoryIndex] = a_gameState.getAvatarOrientation();
-        if (memoryIndex < memoryLength - 1) {
-            memoryIndex += 1;
-        } else {
-            memoryIndex = 0;
-        }
-
-
+    
+        return (scoreVariance > 0.001) ? 0.001 : 0.25;
     }
     
-    public void iterate() {
+    void iterate() {
         ArrayList<IntDoubleHashMap[]> visitedStatesFeatures = new ArrayList<>();
         ArrayList<Double> visitedStatesScores = new ArrayList<>();
         //initialize useful variables
@@ -232,13 +206,12 @@ class TreeSearchPlayer {
         currentStateNode.backPropagateData(currentState, visitedStatesFeatures, visitedStatesScores);
     }
     
-    public int returnBestAction() {
+    int returnBestAction() {
         //Determine the best action to take and return it.
-//        return rootNode.getHighestScoreAction();
         return rootNode.getHighestScoreAction();
     }
 
-    protected double getValueOfState(StateObservation a_gameState) {
+    double getValueOfState(StateObservation a_gameState) {
 
         boolean gameOver = a_gameState.isGameOver();
         Types.WINNER win = a_gameState.getGameWinner();
@@ -256,7 +229,7 @@ class TreeSearchPlayer {
         return rawScore;
     }
 
-    public IntDoubleHashMap[] getFeaturesFromStateObs(StateObservation _state) {
+    IntDoubleHashMap[] getFeaturesFromStateObs(StateObservation _state) {
         double power = 3.0;
         IntDoubleHashMap distanceToResources = new IntDoubleHashMap();
         IntDoubleHashMap avatarResources = new IntDoubleHashMap();
@@ -318,18 +291,6 @@ class TreeSearchPlayer {
             }
         }
 
-//        observationListArray = _state.getImmovablePositions(myLocation);
-//        if (observationListArray != null) {
-//            i = 0;
-//            while (i < observationListArray.length) {
-//                if (!observationListArray[i].isEmpty()) {
-//                    featureValue = Math.pow(1.0 - Math.min(1.0, Math.sqrt(observationListArray[i].get(0).sqDist) / distancesNormalizer), power);
-//                    distanceToImmovables.put(observationListArray[i].get(0).itype, featureValue);
-//                }
-//                i++;
-//            }
-//        }
-
         observationListArray = _state.getPortalsPositions(myLocation);
         if (observationListArray != null) {
             i = 0;
@@ -364,13 +325,13 @@ class TreeSearchPlayer {
         return features;
     }
 
-    public double getBarycenterBias(StateObservation _state) {
+    double getBarycenterBias(StateObservation _state) {
         Vector2d myLocation = _state.getAvatarPosition();
         double tempBarycenterBias = Math.sqrt(myLocation.sqDist(barycenter)) / distancesNormalizer;
         return tempBarycenterBias;
     }
 
-    public double getLocationBias(StateObservation _state) {
+    double getLocationBias(StateObservation _state) {
         double power = 3.0;
         int parsingIndex = 0;
         double tempLocationBias = 0.0;
@@ -393,8 +354,7 @@ class TreeSearchPlayer {
         return barycenterBiasWeight;
     }
 
-    public void updatePastFeaturesGrid(IntDoubleHashMap[] _features) {
-
+    private void updatePastFeaturesGrid(IntDoubleHashMap[] _features) {
         double nbFeatures = 0.;
         for (int i = 0; i < _features.length; i++) {
             for (Integer type : _features[i].keySet()) {
@@ -420,131 +380,4 @@ class TreeSearchPlayer {
             maxNbFeatures = nbFeatures;
         }
     }
-
-    public double getFeatureGridBias(IntDoubleHashMap[] _features){
-
-        double score = 0.;
-        int bucketIndex = 0;
-        for (int i=0; i<_features.length; i++){
-            for (Integer key : _features[i].keySet()){
-                bucketIndex = (int) (Math.max(0.0, Math.min(Math.floor(_features[i].get(key)), 1.0)) * nbGridBuckets);
-                if ( !((pastFeaturesGrid[i].containsKey(key)) && pastFeaturesGrid[i].get(key)[bucketIndex] > 0.0) ){
-                    score += 1.;
-//                    score = 1.;
-                }
-            }
-        }
-//        return score;
-        return(score/maxNbFeatures);
-    }
-
-    public double getFeatureGridWeight(){
-        return featureGridWeight;
-    }
-    
-    /*
-    public void freezeTree() {this.frozen = true;}
-
-    public void deFrost() {this.frozen = false;}
-
-    public boolean isFrozen() {return this.frozen;}
-
-    public boolean puzzleActionFound() {
-        boolean result = false;
-
-        if(this.rootNode.children.length < 1){
-            return true;
-        }
-        else{
-            double firstChildScore = this.rootNode.getActionScore(0);
-            int i = 1;
-            while( (!result) && (i<this.rootNode.children.length) ){
-                if(this.rootNode.getActionScore(i) != firstChildScore){
-                    result = true;
-                }
-                i++;
-            }
-            return result;
-        }
-    }
-    
-    public boolean areTwoStatesEqual(StateObservation s1, StateObservation s2) {
-
-        Vector2d pos1 = s1.getAvatarPosition();
-        Vector2d pos2 = s2.getAvatarPosition();
-        Vector2d orientation1 = s1.getAvatarOrientation();
-        Vector2d orientation2 = s2.getAvatarOrientation();
-
-        int t1 = s1.getGameTick();
-        int t2 = s2.getGameTick();
-
-        if(!(pos1.equals(pos2))){
-            return false;
-        }
-        if(!(orientation1.equals(orientation2))){
-            return false;
-        }
-
-        ArrayList<Observation>[] obsList1 = s1.getNPCPositions();
-        ArrayList<Observation>[] obsList2 = s2.getNPCPositions();
-        if(!areTwoObsListEqual(obsList1, obsList2)){
-            return false;
-        }
-        obsList1 = s1.getMovablePositions();
-        obsList2 = s2.getMovablePositions();
-        if(!areTwoObsListEqual(obsList1, obsList2)){
-            return false;
-        }
-        obsList1 = s1.getResourcesPositions();
-        obsList2 = s2.getResourcesPositions();
-        if(!areTwoObsListEqual(obsList1, obsList2)){
-            return false;
-        }
-        return true;
-    }
-
-    private boolean areTwoObsListEqual(ArrayList<Observation>[] obsList1, ArrayList<Observation>[] obsList2){
-        int i = 0;
-        int j = 0;
-        if ((obsList1 != null) && (obsList2 != null)) {
-            if (obsList1.length != obsList2.length) {
-                return false;
-            } else {
-                while (i < obsList1.length) {
-                    if (obsList1[i].size() != obsList2[i].size()) {
-                        return false;
-                    } else {
-                        while (j < obsList1[i].size()) {
-                            if (!obsList1[i].get(j).equals(obsList2[i].get(j))) {
-                                return false;
-                            }
-                            j++;
-                        }
-                    }
-                    i++;
-                }
-            }
-        }
-        return true;
-    }
-
-    private boolean isStateAlreadyVisited(StateObservation _state){
-        for (StateObservation s : visitedStates){
-            Vector2d pos1 = s.getAvatarPosition();
-            Vector2d pos2 = _state.getAvatarPosition();
-            Vector2d orientation1 = s.getAvatarOrientation();
-            Vector2d orientation2 = _state.getAvatarOrientation();
-            if(pos1.equals(pos2) && orientation1.equals(orientation2)){
-                if (areTwoStatesEqual(_state, s)){
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public double getHighestScoreFromRoot(){
-        return rootNode.getActionScore(rootNode.getHighestScoreAction());
-    }
-    */
 }
