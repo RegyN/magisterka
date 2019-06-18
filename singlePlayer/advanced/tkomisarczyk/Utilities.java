@@ -27,7 +27,7 @@ public class Utilities {
         double rawScore = obs.getGameScore();
     
         if(gameOver && win == Types.WINNER.PLAYER_LOSES)
-            return -largeNumber/turns;
+            return -3*largeNumber/(2+turns);
     
         if(gameOver && win == Types.WINNER.PLAYER_WINS)
             return largeNumber;

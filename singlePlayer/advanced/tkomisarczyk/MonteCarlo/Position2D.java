@@ -2,7 +2,9 @@ package tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo;
 
 import core.game.Observation;
 import core.game.StateObservation;
+import ontology.Types;
 import tools.Vector2d;
+import tracks.singlePlayer.past.Return42.knowledgebase.KnowledgeBase;
 
 import java.util.ArrayList;
 
@@ -73,6 +75,24 @@ public class Position2D {
 
     public static ArrayList<Observation> GetObservationsFast(StateObservation obs, double x, double y){
         return obs.getObservationGrid()[(int) x][(int) y];
+    }
+
+    public static Position2D ModifyPosition(Position2D source, Types.ACTIONS action){
+        Position2D newPosition = source;
+        var speed = GameKnowledge.getInstance().avatarSpeed;
+        if(action == Types.ACTIONS.ACTION_UP){
+            newPosition = new Position2D(source.x, source.y - speed);
+        }
+        else if(action == Types.ACTIONS.ACTION_DOWN){
+            newPosition = new Position2D(source.x, source.y + speed);
+        }
+        else if(action == Types.ACTIONS.ACTION_LEFT){
+            newPosition = new Position2D(source.x - speed, source.y);
+        }
+        else if(action == Types.ACTIONS.ACTION_RIGHT){
+            newPosition = new Position2D(source.x + speed, source.y);
+        }
+        return newPosition;
     }
 
     public Vector2d AsVector(){

@@ -21,17 +21,29 @@ public class Agent extends AbstractPlayer {
     int turnNumber;
     GameKnowledge knowledge;
     PositionHistory history;
+    AgentParameters params;
 
 
     public Agent(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
         generator = new Random();
+
+        params = AgentParameters.GetInstance(true);
+        params.maxDepth = 10;
+        params.expandIntelligently = true;
+        params.rollSimulationCleverly = true;
+        params.useGameKnowledge = true;
+        params.useHistoryInValuation = true;
+        params.useHistoryOnExit = false;
+        params.finder = BestActionFinder.BestAverage;
+
         actions = stateObs.getAvailableActions();
         depth = 10;
         turnNumber = 0;
         knowledge = GameKnowledge.GetNew();
         history = PositionHistory.GetNew();
-
-        ExtractKnowledge(stateObs, elapsedTimer);
+        if(params.useGameKnowledge) {
+            ExtractKnowledge(stateObs, elapsedTimer);
+        }
     }
 
     private void ExtractKnowledge(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
@@ -57,7 +69,15 @@ public class Agent extends AbstractPlayer {
     }
 
     private Types.ACTIONS ChooseBestAction(TreeNode root) {
-        return root.GetMostVisitedAction(knowledge.type == GameType.Planar2D);
+        if(params.finder == BestActionFinder.BestAverage) {
+            return root.GetBestAverageAction(params.useHistoryOnExit);
+        }
+        else if(params.finder == BestActionFinder.BestScore){
+            return root.GetBestScoreAction(params.useHistoryOnExit);
+        }
+        else{
+            return root.GetMostVisitedAction(params.useHistoryOnExit);
+        }
     }
 
     @Override
@@ -66,7 +86,7 @@ public class Agent extends AbstractPlayer {
         history.Add(Position2D.GetAvatarPosition(stateObs));
 
         root = new TreeNode(depth, stateObs);
-        //String breakReason;
+//        String breakReason;
         int remainingLimit = 5;
         while (true) {
             if (remaining <= 2 * avgTimeTaken) {
@@ -76,19 +96,25 @@ public class Agent extends AbstractPlayer {
                 //breakReason = "remainingLimit";
                 break;
             }
-            root.ExpandIntelligently(stateObs);
+            if(params.expandIntelligently) {
+                root.ExpandIntelligently(stateObs);
+            }
+            else{
+                root.Expand(stateObs);
+            }
             UpdateTimers(elapsedTimer);
         }
-        //System.out.println(numIters + " " + breakReason);
+//        System.out.println(numIters + " " + breakReason);
 
 //        PĘTLA DO DEBUGOWANIA BEZ OGRANICZEN CZASOWYCH
-//        int iterations = 15;
+//        int iterations = 20;
 //        for(int i = 0; i<iterations; i++){
 //            root.Expand(stateObs);
 //            UpdateTimers(elapsedTimer);
 //        }
 //        System.out.println(avgTimeTaken);
         turnNumber++;
+//        System.out.println(numIters);
         var chosen = ChooseBestAction(root);
 //        System.out.println(chosen.name());
         return chosen;

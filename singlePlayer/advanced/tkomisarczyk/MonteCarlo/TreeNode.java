@@ -18,6 +18,8 @@ public class TreeNode {
     List<Types.ACTIONS> childActions;
     int numTests = 0;
     int sumScore = 0;
+    int stateScore = 0;
+    int localScore = 0;
     int uninitiatedChildren;
     Random generator;
     double K = 1.41;
@@ -32,21 +34,25 @@ public class TreeNode {
     
     TreeNode(int maxDepth, StateObservation obs) {
         // Dla korzenia nie robię symulacji
-        this.maxDepth = maxDepth;
+        this.maxDepth = AgentParameters.GetInstance().maxDepth;
         this.depth = 0;
         this.parent = null;
         this.generator = new Random();
         this.state = obs;
+        this.stateScore = Utilities.EvaluateState(obs);
+        this.localScore = stateScore;
     }
     
     TreeNode(TreeNode parent, StateObservation obs) {
-        this.maxDepth = parent.maxDepth;
+        AgentParameters params = AgentParameters.GetInstance();
+        this.maxDepth = params.maxDepth;
         this.depth = parent.depth + 1;
         this.parent = parent;
         this.generator = parent.generator;
+        this.stateScore = Utilities.EvaluateState(obs);
         int result;
-        if(GameKnowledge.getInstance().type == GameType.Planar2D) {
-            result = RollSimulationCleverly(obs, generator);
+        if(params.rollSimulationCleverly && GameKnowledge.getInstance().type == GameType.Planar2D) {
+            result = RollSimulationCleverly(obs, generator, true);
         }
         else{
             result = RollSimulation(obs, generator);
@@ -76,62 +82,37 @@ public class TreeNode {
             if (obs.isGameOver())
                 break;
             int choice = generator.nextInt(actions.size());
-            Position2D avatarPos = Position2D.GetAvatarPosition(obs);
-
-            // Sprawdzam, co znajduje się w kierunku, który wybrał generator
-            ArrayList<Observation> obstacles = new ArrayList<>();
-            if(actions.get(choice) == Types.ACTIONS.ACTION_UP){
-                obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y-knowledge.avatarSpeed);
-            }
-            else if(actions.get(choice) == Types.ACTIONS.ACTION_DOWN){
-                obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y+knowledge.avatarSpeed);
-            }
-            else if(actions.get(choice) == Types.ACTIONS.ACTION_LEFT){
-                obstacles = Position2D.GetObservations(obs, avatarPos.x-knowledge.avatarSpeed, avatarPos.y);
-            }
-            else if(actions.get(choice) == Types.ACTIONS.ACTION_RIGHT){
-                obstacles = Position2D.GetObservations(obs, avatarPos.x+knowledge.avatarSpeed, avatarPos.y);
-            }
-            // Jeśli są tam jakieś ściany, to losuję jeszcze raz
-            if(knowledge.CheckForWalls(obstacles)){
-                choice = generator.nextInt(actions.size());
-            }
+//            Position2D avatarPos = Position2D.GetAvatarPosition(obs);
+//
+//            // Sprawdzam, co znajduje się w kierunku, który wybrał generator
+//            ArrayList<Observation> obstacles = new ArrayList<>();
+//            if(actions.get(choice) == Types.ACTIONS.ACTION_UP){
+//                obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y-knowledge.avatarSpeed);
+//            }
+//            else if(actions.get(choice) == Types.ACTIONS.ACTION_DOWN){
+//                obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y+knowledge.avatarSpeed);
+//            }
+//            else if(actions.get(choice) == Types.ACTIONS.ACTION_LEFT){
+//                obstacles = Position2D.GetObservations(obs, avatarPos.x-knowledge.avatarSpeed, avatarPos.y);
+//            }
+//            else if(actions.get(choice) == Types.ACTIONS.ACTION_RIGHT){
+//                obstacles = Position2D.GetObservations(obs, avatarPos.x+knowledge.avatarSpeed, avatarPos.y);
+//            }
+//            // Jeśli są tam jakieś ściany, to losuję jeszcze raz
+//            if(knowledge.CheckForWalls(obstacles)){
+//                choice = generator.nextInt(actions.size());
+//            }
             obs.advance(actions.get(choice));
         }
         return Utilities.EvaluateState(obs, d);
     }
 
-    private int RollSimulationCleverlyWithHistory(StateObservation obs, Random generator){
-        var actions = obs.getAvailableActions();
-        var knowledge = GameKnowledge.getInstance();
-        int d = depth;
-        for (; d < maxDepth; d++) {
-            if (obs.isGameOver())
-                break;
-            int choice = generator.nextInt(actions.size());
-            Position2D avatarPos = Position2D.GetAvatarPosition(obs);
-
-            // Sprawdzam, co znajduje się w kierunku, który wybrał generator
-            ArrayList<Observation> obstacles = new ArrayList<>();
-            if(actions.get(choice) == Types.ACTIONS.ACTION_UP){
-                obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y-knowledge.avatarSpeed);
-            }
-            else if(actions.get(choice) == Types.ACTIONS.ACTION_DOWN){
-                obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y+knowledge.avatarSpeed);
-            }
-            else if(actions.get(choice) == Types.ACTIONS.ACTION_LEFT){
-                obstacles = Position2D.GetObservations(obs, avatarPos.x-knowledge.avatarSpeed, avatarPos.y);
-            }
-            else if(actions.get(choice) == Types.ACTIONS.ACTION_RIGHT){
-                obstacles = Position2D.GetObservations(obs, avatarPos.x+knowledge.avatarSpeed, avatarPos.y);
-            }
-            // Jeśli są tam jakieś ściany, to losuję jeszcze raz
-            if(knowledge.CheckForWalls(obstacles)){
-                choice = generator.nextInt(actions.size());
-            }
-            obs.advance(actions.get(choice));
+    private int RollSimulationCleverly(StateObservation obs, Random generator, boolean useHistory){
+        var result = RollSimulationCleverly(obs, generator);
+        if(useHistory){
+            result += PositionHistory.GetInstance().getLocationBias(obs);
         }
-        return Utilities.EvaluateState(obs, d);
+        return result;
     }
 
     // Symulacje prowadzone w taki sposób, ze niemożliwe jest zrobienie ruchu w ścianę itp.
@@ -321,6 +302,10 @@ public class TreeNode {
         }
         return i;
     }
+
+    private int GetNodeValue(){
+        return sumScore + stateScore;
+    }
     
     public int ChooseChildToExpandUct(StateObservation obs) {
         double maxScore = Double.MIN_VALUE;
@@ -342,6 +327,26 @@ public class TreeNode {
                 chosenScore = score;
             }
         }
+
+        Position2D avatarPos = Position2D.GetAvatarPosition(obs);
+        var knowledge = GameKnowledge.getInstance();
+        ArrayList<Observation> obstacles = new ArrayList<>();
+        if(childActions.get(choice) == Types.ACTIONS.ACTION_UP){
+            obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y-knowledge.avatarSpeed);
+        }
+        else if(childActions.get(choice) == Types.ACTIONS.ACTION_DOWN){
+            obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y+knowledge.avatarSpeed);
+        }
+        else if(childActions.get(choice) == Types.ACTIONS.ACTION_LEFT){
+            obstacles = Position2D.GetObservations(obs, avatarPos.x-knowledge.avatarSpeed, avatarPos.y);
+        }
+        else if(childActions.get(choice) == Types.ACTIONS.ACTION_RIGHT){
+            obstacles = Position2D.GetObservations(obs, avatarPos.x+knowledge.avatarSpeed, avatarPos.y);
+        }
+        // Jeśli są tam jakieś ściany, to losuję jeszcze raz
+        if(knowledge.CheckForWalls(obstacles)){
+            choice = generator.nextInt(childActions.size());
+        }
         return choice;
     }
     
@@ -361,8 +366,8 @@ public class TreeNode {
         return childActions.get(GetBestScoreIndex(useHistory));
     }
 
-    public Types.ACTIONS GetBestAverageAction() {
-        return childActions.get(GetBestAverageIndex());
+    public Types.ACTIONS GetBestAverageAction(boolean useHistory) {
+        return childActions.get(GetBestAverageIndex(useHistory));
     }
 
     public Types.ACTIONS GetMostVisitedAction(boolean useHistory) {
@@ -385,20 +390,8 @@ public class TreeNode {
             var score = Utilities.DisturbScore(children.get(i).sumScore);
             if(score > max){
                 var action = childActions.get(i);
-                Position2D newPosition = avatarPos;
-                //Jeśli nie ma go w historii, to mamy nowy max.
-                if(action == Types.ACTIONS.ACTION_UP){
-                    newPosition = new Position2D(avatarPos.x, avatarPos.y - 1);
-                }
-                else if(action == Types.ACTIONS.ACTION_DOWN){
-                    newPosition = new Position2D(avatarPos.x, avatarPos.y + 1);
-                }
-                else if(action == Types.ACTIONS.ACTION_LEFT){
-                    newPosition = new Position2D(avatarPos.x - 1, avatarPos.y);
-                }
-                else if(action == Types.ACTIONS.ACTION_RIGHT){
-                    newPosition = new Position2D(avatarPos.x + 1, avatarPos.y);
-                }
+                Position2D newPosition = Position2D.ModifyPosition(avatarPos, action);
+                score = score - history.Count(newPosition);
                 if(history.Contains(newPosition)){
                     score = score > 0 ? (int)(score * correctionFactor) : (int)(score / correctionFactor);
                 }
@@ -426,8 +419,34 @@ public class TreeNode {
         return maxIndex;
     }
 
-    public int GetBestAverageIndex() {
+    public int GetBestAverageIndex(boolean useHistory) {
+        if(!useHistory){
+            return GetBestAverageIndex();
+        }
+        var history = PositionHistory.GetInstance();
+        var avatarPos = Position2D.GetAvatarPosition(state);
         double max = Double.MIN_VALUE;
+        int maxIndex = 0;
+        for (int i = 0; i < children.size(); i++) {
+            if(children.get(i) == null){
+                continue;
+            }
+            var score = Utilities.DisturbScore(children.get(i).numTests);
+            if (children.get(i).numTests != 0 && score > max) {
+                var action = childActions.get(i);
+                Position2D newPosition = Position2D.ModifyPosition(avatarPos, action);
+                score = score - history.Count(newPosition);
+                if(score > max){
+                    max = score;
+                    maxIndex = i;
+                }
+            }
+        }
+        return maxIndex;
+    }
+
+    public int GetBestAverageIndex() {
+        double max = -Double.MAX_VALUE;
         int maxIndex = 0;
         for (int i = 0; i < children.size(); i++) {
             if(children.get(i) == null){
@@ -472,20 +491,7 @@ public class TreeNode {
             var score = Utilities.DisturbScore(children.get(i).numTests);
             if(score > max){
                 var action = childActions.get(i);
-                Position2D newPosition = avatarPos;
-                //Jeśli nie ma go w historii, to mamy nowy max.
-                if(action == Types.ACTIONS.ACTION_UP){
-                    newPosition = new Position2D(avatarPos.x, avatarPos.y - 1);
-                }
-                else if(action == Types.ACTIONS.ACTION_DOWN){
-                    newPosition = new Position2D(avatarPos.x, avatarPos.y + 1);
-                }
-                else if(action == Types.ACTIONS.ACTION_LEFT){
-                    newPosition = new Position2D(avatarPos.x - 1, avatarPos.y);
-                }
-                else if(action == Types.ACTIONS.ACTION_RIGHT){
-                    newPosition = new Position2D(avatarPos.x + 1, avatarPos.y);
-                }
+                Position2D newPosition = Position2D.ModifyPosition(avatarPos, action);
                 score = score - history.Count(newPosition);
                 if(score > max){
                     max = score;

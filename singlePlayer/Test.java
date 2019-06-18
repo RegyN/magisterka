@@ -14,54 +14,54 @@ public class Test {
 
     public static void main(String[] args) {
 
-		// Mistrzowie nowi:
-		String thorbjrn = "tracks.singlePlayer.past.thorbjrn.Agent";
-		String YOLOBOT = "tracks.singlePlayer.past.YOLOBOT.Agent";
-		String Return42 = "tracks.singlePlayer.past.Return42.Agent";
-		// Mistrzowie starzy:
-		String adrien = "tracks.singlePlayer.past.adrien.Agent";
-		String idealStandard = "tracks.singlePlayer.past.IdealStandard.Agent";
-		String Shmokin = "tracks.singlePlayer.past.Shmokin.Agent";
-		// Mistrzowie przyszli:
-		String tomekController = "tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo.Agent";
-		// Przykłady
-		String sampleMCTS = "tracks.singlePlayer.advanced.sampleMCTS.Agent";
+        // Mistrzowie nowi:
+        String thorbjrn = "tracks.singlePlayer.past.thorbjrn.Agent";
+        String YOLOBOT = "tracks.singlePlayer.past.YOLOBOT.Agent";
+        String Return42 = "tracks.singlePlayer.past.Return42.Agent";
+        // Mistrzowie starzy:
+        String adrien = "tracks.singlePlayer.past.adrien.Agent";
+        String idealStandard = "tracks.singlePlayer.past.IdealStandard.Agent";
+        String Shmokin = "tracks.singlePlayer.past.Shmokin.Agent";
+        // Mistrzowie przyszli:
+        String tomekController = "tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo.Agent";
+        // Przykłady
+        String sampleMCTS = "tracks.singlePlayer.advanced.sampleMCTS.Agent";
 
-		//Load available games
-		String spGamesCollection =  "examples/all_games_sp.csv";
-		String[][] games = Utils.readGames(spGamesCollection);
+        //Load available games
+        String spGamesCollection =  "examples/all_games_sp.csv";
+        String[][] games = Utils.readGames(spGamesCollection);
 
-		//Game settings
-		boolean visuals = true;
-		int seed = new Random().nextInt();
+        //Game settings
+        boolean visuals = true;
+        int seed = new Random().nextInt();
 
-		// Game and level to play
-		int gameIdx = 68;
-		int levelIdx = 1; // level names from 0 to 4 (game_lvlN.txt).
-		String gameName = games[gameIdx][1];
-		for(int i=0; i<111; i++){
-			System.out.println(i + ": " + games[i][0] + "," + games[i][1]);
-		}
-		String game = games[gameIdx][0];
-		String level1 = game.replace(gameName, gameName + "_lvl" + levelIdx);
+        // Game and level to play
+        int gameIdx = 0;
+        int levelIdx = 1; // level names from 0 to 4 (game_lvlN.txt).
+        String gameName = games[gameIdx][1];
+        for(int i=0; i<111; i++){
+            System.out.println(i + ": " + games[i][0] + "," + games[i][1]);
+        }
+        String game = games[gameIdx][0];
+        String level1 = game.replace(gameName, gameName + "_lvl" + levelIdx);
 
-		String recordActionsFile = null;// "actions_" + games[gameIdx] + "_lvl"
-						// + levelIdx + "_" + seed + ".txt";
-						// where to record the actions
-						// executed. null if not to save.
+        String recordActionsFile = null;// "actions_" + games[gameIdx] + "_lvl"
+        // + levelIdx + "_" + seed + ".txt";
+        // where to record the actions
+        // executed. null if not to save.
 
-		// 1. This starts a game, in a level, played by a human.
-		//ArcadeMachine.playOneGame(game, level1, recordActionsFile, seed);
+        // 1. This starts a game, in a level, played by a human.
+        //ArcadeMachine.playOneGame(game, level1, recordActionsFile, seed);
 
-		// 2. This plays a game in a level by the controller.
-		ArcadeMachine.runOneGame(game, level1, visuals, adrien, recordActionsFile, seed, 0);
+        // 2. This plays a game in a level by the controller.
+        ArcadeMachine.runOneGame(game, level1, visuals, tomekController, recordActionsFile, seed, 0);
 
 
-		// 3. This replays a game from an action file previously recorded
-	//	 String readActionsFile = recordActionsFile;
-	//	 ArcadeMachine.replayGame(game, level1, visuals, readActionsFile);
+        // 3. This replays a game from an action file previously recorded
+        //	 String readActionsFile = recordActionsFile;
+        //	 ArcadeMachine.replayGame(game, level1, visuals, readActionsFile);
 
-		// 4. This plays a single game, in N levels, M times :
+        // 4. This plays a single game, in N levels, M times :
 //		String level2 = new String(game).replace(gameName, gameName + "_lvl" + 1);
 //		int M = 10;
 //		for(int i=0; i<games.length; i++){
@@ -71,7 +71,7 @@ public class Test {
 //			ArcadeMachine.runGames(game, new String[]{level1}, M, sampleMCTSController, null);
 //		}
 
-		//5. This plays N games, in the first L levels, M times each. Actions to file optional (set saveActions to true).
+        //5. This plays N games, in the first L levels, M times each. Actions to file optional (set saveActions to true).
 //		int N = games.length, L = 2, M = 1;
 //		boolean saveActions = false;
 //		String[] levels = new String[L];

@@ -24,8 +24,14 @@ class StateNode {
 
     private final Random randomGenerator;
 
+    /**
+     * Ile spośród symulacji zakończyło się końcem gry
+     */
     private int numberOfExits;
 
+    /**
+     * Suma punktów
+     */
     private double cumulatedValueOnExit;
 
     private double passingValue;
@@ -43,8 +49,6 @@ class StateNode {
 
     private final TreeSearchPlayer parentTree;
 
-    private IntDoubleHashMap[] features;
-
     private double locationBias;
 
     private double barycenterBias;
@@ -55,6 +59,8 @@ class StateNode {
      * @param _state , the encountered state
      */
     StateNode(StateObservation _state, Random _random, TreeSearchPlayer _parentTree) {
+        parentTree = _parentTree;
+
         encounteredStates = new ArrayList<>();
         encounteredStates.add(_state);
         children = new StateNode[Agent.NUM_ACTIONS];
@@ -62,17 +68,17 @@ class StateNode {
         actionScores = new double[Agent.NUM_ACTIONS];
         randomGenerator = _random;
 
-        parentTree = _parentTree;
 
         rawScore = _state.getGameScore();
 
-        features = new IntDoubleHashMap[parentTree.nbCategories];
-        features = parentTree.getFeaturesFromStateObs(_state);
         locationBias = parentTree.getLocationBias(_state);
         barycenterBias = parentTree.getBarycenterBias(_state);
     }
 
     private StateNode(StateObservation _state, Random _random, StateNode _parentNode) {
+        parentTree = _parentNode.parentTree;
+        parentNode = _parentNode;
+
         encounteredStates = new ArrayList<>();
         encounteredStates.add(_state);
         children = new StateNode[Agent.NUM_ACTIONS];
@@ -80,23 +86,15 @@ class StateNode {
         actionScores = new double[Agent.NUM_ACTIONS];
         randomGenerator = _random;
 
-        parentTree = _parentNode.parentTree;
-        parentNode = _parentNode;
 
         rawScore = _state.getGameScore();
 
-        features = new IntDoubleHashMap[parentTree.nbCategories];
-        features = parentTree.getFeaturesFromStateObs(_state);
         locationBias = parentTree.getLocationBias(_state);
         barycenterBias = parentTree.getBarycenterBias(_state);
     }
 
-    public IntDoubleHashMap[] getFeatures(){
-        return this.features;
-    }
-
     private double getNodeValue() {
-        return rawScore + locationBias * parentTree.getLocationBiasWeight() + barycenterBias * parentTree.getBarycenterBiasWeight();
+        return rawScore + locationBias * 0.00;// + barycenterBias * 0.01;
     }
 
     /**
@@ -171,13 +169,13 @@ class StateNode {
         return bestActionIndex;
     }
 
-    void backPropagateData(StateObservation _state, ArrayList<IntDoubleHashMap[]> _visitedFeatures, ArrayList<Double> _visitedScores) {
+    void backPropagateData(StateObservation _state) {
         //Updating gameOver count and score
         boolean gameOver = _state.isGameOver();
 
         if (gameOver) {
             this.numberOfExits += 1;
-            cumulatedValueOnExit += parentTree.getValueOfState(_state);
+            this.cumulatedValueOnExit += parentTree.getValueOfState(_state);
         }
 
         StateNode currentNode = this;
@@ -199,7 +197,7 @@ class StateNode {
             if (currentNode.parentNode != null) {
                 currentNode.passingValue = currentNode.getNodeValue() - currentNode.parentNode.getNodeValue() + parentTree.discountFactor * currentNode.maxScore;
                 int _actionIndex = currentNode.parentAction;
-                currentNode.parentNode.actionScores[_actionIndex] = (currentNode.cumulatedValueOnExit / (double) currentNode.numberOfSimulations) + ((double) (currentNode.numberOfSimulations - currentNode.numberOfExits) / (double) currentNode.numberOfSimulations) * currentNode.passingValue;
+                currentNode.parentNode.actionScores[_actionIndex] = /*(currentNode.cumulatedValueOnExit / (double) currentNode.numberOfSimulations) + */((double) (currentNode.numberOfSimulations - currentNode.numberOfExits) / (double) currentNode.numberOfSimulations) * currentNode.passingValue;
             }
 
             currentNode = currentNode.parentNode;

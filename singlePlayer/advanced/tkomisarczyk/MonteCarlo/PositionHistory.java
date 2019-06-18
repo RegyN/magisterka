@@ -1,5 +1,7 @@
 package tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo;
 
+import core.game.StateObservation;
+
 import java.util.ArrayDeque;
 import java.util.Queue;
 
@@ -9,7 +11,7 @@ public class PositionHistory {
     private static PositionHistory instance = null;
 
     private PositionHistory(){
-        length = 10;
+        length = 200;
         Positions = new ArrayDeque<>();
     }
 
@@ -53,5 +55,19 @@ public class PositionHistory {
         if(Positions.size() > length){
             Positions.remove();
         }
+    }
+
+    double getLocationBias(StateObservation state) {
+        double power = 3.0;
+        double tempLocationBias = 0.0;
+        double timeDiscountFactor = 0.99;
+        int i = 0;
+        for (var pos : Positions) {
+            if (((Position2D.GetAvatarPosition(state).Equals(pos)))) {
+                tempLocationBias += Math.pow(timeDiscountFactor, length - i) * 0.01;
+            }
+            i++;
+        }
+        return Math.pow(1.0 - tempLocationBias, power);
     }
 }

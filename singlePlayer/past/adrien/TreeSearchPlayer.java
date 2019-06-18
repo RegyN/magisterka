@@ -20,11 +20,9 @@ class TreeSearchPlayer {
     private final double epsilon;
     final double discountFactor;
     final int nbCategories;
-    private double maxResources;
     private double distancesNormalizer;
-    private int nbGridBuckets;
-    private IntArrayOfDoubleHashMap[] pastFeaturesGrid;
-    private double maxNbFeatures;
+    //private int nbGridBuckets;
+    //private double maxNbFeatures;
     private final int memoryLength;
     private final Vector2d[] pastAvatarPositions;
     private final double[] pastScores;
@@ -34,7 +32,7 @@ class TreeSearchPlayer {
     private double locationBiasWeight;
     private double barycenterBiasWeight;
     private int memoryIndex;
-    
+
     /**
      * Creates the MCTS player with a sampleRandom generator object.
      *
@@ -45,9 +43,6 @@ class TreeSearchPlayer {
         epsilon = 0.35;
         discountFactor = 0.9;
         nbCategories = 8;
-        maxResources = 20.0;
-        nbGridBuckets = 50;
-        maxNbFeatures = 0.;
 
         memoryIndex = 0;
         memoryLength = 500;
@@ -58,19 +53,12 @@ class TreeSearchPlayer {
         barycenter = new Vector2d();
         locationBiasWeight = 0.;
         barycenterBiasWeight = 0.;
-    
-        pastFeaturesGrid = new IntArrayOfDoubleHashMap[nbCategories];
-        for (int i = 0; i < nbCategories; i++) {
-            pastFeaturesGrid[i] = new IntArrayOfDoubleHashMap();
-        }
     }
 
     public void init(StateObservation a_gameState) {
         distancesNormalizer = Math.sqrt((Math.pow(a_gameState.getWorldDimension().getHeight() + 1.0, 2) + Math.pow(a_gameState.getWorldDimension().getWidth() + 1.0, 2)));
 
         rootObservation = a_gameState.copy();
-        IntDoubleHashMap[] rootFeatures = getFeaturesFromStateObs(a_gameState);
-        updatePastFeaturesGrid(rootFeatures);
 
         rootNode = new StateNode(rootObservation, randomGenerator, this);
 
@@ -90,7 +78,7 @@ class TreeSearchPlayer {
 
         pastScores[memoryIndex] = a_gameState.getGameScore();
         pastGameTicks[memoryIndex] = a_gameState.getGameTick();
-        
+
         if (nbMemorizedPositions > 1) {
             double lambda = 0.15;
             Vector2d pastBarycenter = barycenter;
@@ -100,21 +88,21 @@ class TreeSearchPlayer {
         } else {
             barycenter = new Vector2d(pastAvatarPositions[memoryIndex]);
         }
-    
+
         locationBiasWeight = calculateLocationBiasWeight();
 
-        if (memoryIndex < memoryLength - 1) {
-            memoryIndex += 1;
-        } else {
-            memoryIndex = 0;
-        }
+        memoryIndex = ++memoryIndex % memoryLength;
     }
-    
-    double calculateLocationBiasWeight(){
+
+    /**
+     * Wyznacza wagę LocationBias. Jest duża (0.25), jeśli rozrzut wyników w ostatnim czasie był duży, w przeciwnym
+     * wypadku jest 0.001
+     */
+    private double calculateLocationBiasWeight() {
         double scoreMean = 0.;
         double nbScores = 0.;
         double scoreVariance = 0.;
-    
+
         for (double x : pastScores) {
             scoreMean += x;
             nbScores += 1.;
@@ -124,38 +112,30 @@ class TreeSearchPlayer {
             scoreVariance += Math.pow(x - scoreMean, 2.);
         }
         scoreVariance = scoreVariance / nbScores;
-    
+
         return (scoreVariance > 0.001) ? 0.001 : 0.25;
     }
-    
+
     void iterate() {
-        ArrayList<IntDoubleHashMap[]> visitedStatesFeatures = new ArrayList<>();
-        ArrayList<Double> visitedStatesScores = new ArrayList<>();
         //initialize useful variables
         StateObservation currentState = rootObservation.copy();
         StateNode currentStateNode = rootNode;
         int currentAction = 0;
         boolean stayInTree = true;
         int depth = 0;
-        IntDoubleHashMap[] features1 = new IntDoubleHashMap[nbCategories];
-        IntDoubleHashMap[] features2 = new IntDoubleHashMap[nbCategories];
         double score1;
         double score2 = 0.0;
-        double instantReward;
 
         //System.out.format("game tick is %d%n ", currentState.getGameTick());
         //loop navigating through the tree
         while (stayInTree) {
-            score1 = getValueOfState(currentState);
-            visitedStatesScores.add(0, score1);
-
-
             if (currentStateNode.notFullyExpanded()) {
                 //add a new action
                 int bestActionIndex = 0;
                 if ((currentStateNode.numberOfSimulations < 2) && (currentStateNode.parentNode != null)) {
                     bestActionIndex = currentStateNode.parentAction;
-                } else {
+                }
+                else {
                     double bestValue = -1;
                     for (int i = 0; i < currentStateNode.children.length; i++) {
                         double x = randomGenerator.nextDouble();
@@ -173,7 +153,6 @@ class TreeSearchPlayer {
 
 //                features2 = currentStateNode.features;
                 score2 = getValueOfState(currentState);
-                instantReward = score2 - score1;
 
                 stayInTree = false;
             }
@@ -186,12 +165,11 @@ class TreeSearchPlayer {
                 }
                 currentStateNode.actionNbSimulations[currentAction] += 1;
                 currentStateNode = currentStateNode.children[currentAction];
-    
+
                 //TODO: refine this condition to something that triggers calling the forward model
                 currentState.advance(Agent.actions[currentAction]); //updates the current state with the forward model
                 //currentStateNode.updateData(currentState.copy());
                 score2 = getValueOfState(currentState);
-                instantReward = score2 - score1;
 
                 if (currentState.isGameOver()) {
                     stayInTree = false;
@@ -200,12 +178,9 @@ class TreeSearchPlayer {
             depth++;
         }
 
-        visitedStatesFeatures.add(0, features2);
-        visitedStatesScores.add(0, score2);
-
-        currentStateNode.backPropagateData(currentState, visitedStatesFeatures, visitedStatesScores);
+        currentStateNode.backPropagateData(currentState);
     }
-    
+
     int returnBestAction() {
         //Determine the best action to take and return it.
         return rootNode.getHighestScoreAction();
@@ -229,102 +204,6 @@ class TreeSearchPlayer {
         return rawScore;
     }
 
-    IntDoubleHashMap[] getFeaturesFromStateObs(StateObservation _state) {
-        double power = 3.0;
-        IntDoubleHashMap distanceToResources = new IntDoubleHashMap();
-        IntDoubleHashMap avatarResources = new IntDoubleHashMap();
-        IntDoubleHashMap distanceToNPC = new IntDoubleHashMap();
-        IntDoubleHashMap distanceToMovables = new IntDoubleHashMap();
-        IntDoubleHashMap distanceToImmovables = new IntDoubleHashMap();
-        IntDoubleHashMap distanceToPortals = new IntDoubleHashMap();
-        IntDoubleHashMap healthPoints = new IntDoubleHashMap();
-
-        //Computing Deterministic bias values
-        Vector2d myLocation = _state.getAvatarPosition();
-        int i;
-        double featureValue = 0.;
-        ArrayList<Observation>[] observationListArray = _state.getResourcesPositions(myLocation);
-
-        if (observationListArray != null) {
-            i = 0;
-            while (i < observationListArray.length) {
-                if (!observationListArray[i].isEmpty()) {
-                    featureValue = Math.pow(1.0 - Math.min(1.0, Math.sqrt(observationListArray[i].get(0).sqDist) / distancesNormalizer), power);
-                    distanceToResources.put(observationListArray[i].get(0).itype, featureValue);
-                }
-                i++;
-            }
-        }
-
-        double tempTotalResources = 0.0;
-        if (!_state.getAvatarResources().isEmpty()) {
-            for (int key : _state.getAvatarResources().keySet()) {
-                if((double) _state.getAvatarResources().get(key) > maxResources){
-                    maxResources = (double) _state.getAvatarResources().get(key);
-                }
-                tempTotalResources = (double) _state.getAvatarResources().get(key) / maxResources;
-                avatarResources.put(key, Math.pow(tempTotalResources, power));
-            }
-        }
-
-        observationListArray = _state.getNPCPositions(myLocation);
-        if (observationListArray != null) {
-            i = 0;
-            while (i < observationListArray.length) {
-                if (!observationListArray[i].isEmpty()) {
-                    featureValue = Math.pow(1.0 - Math.min(1.0, Math.sqrt(observationListArray[i].get(0).sqDist) / distancesNormalizer), power);
-                    distanceToNPC.put(observationListArray[i].get(0).itype, featureValue);
-                }
-                i++;
-            }
-        }
-
-        observationListArray = _state.getMovablePositions(myLocation);
-        if (observationListArray != null) {
-            i = 0;
-            while (i < observationListArray.length) {
-                if (!observationListArray[i].isEmpty()) {
-                    featureValue = Math.pow(1.0 - Math.min(1.0, Math.sqrt(observationListArray[i].get(0).sqDist) / distancesNormalizer), power);
-                    distanceToMovables.put(observationListArray[i].get(0).itype, featureValue);
-                }
-                i++;
-            }
-        }
-
-        observationListArray = _state.getPortalsPositions(myLocation);
-        if (observationListArray != null) {
-            i = 0;
-            while (i < observationListArray.length) {
-                if (!observationListArray[i].isEmpty()) {
-                    featureValue = Math.pow(1.0 - Math.min(1.0, Math.sqrt(observationListArray[i].get(0).sqDist) / distancesNormalizer), power);
-                    distanceToPortals.put(observationListArray[i].get(0).itype, featureValue);
-                }
-                i++;
-            }
-        }
-
-        if (!_state.isGameOver()) {
-            healthPoints.put(0, 1.0 - (double) _state.getAvatarHealthPoints() / _state.getAvatarLimitHealthPoints());
-        }
-
-        IntDoubleHashMap[] features = new IntDoubleHashMap[nbCategories];
-        for (int j = 0; j < nbCategories; j++) {
-            features[j] = new IntDoubleHashMap();
-        }
-
-        IntDoubleHashMap offset = new IntDoubleHashMap();
-        offset.put(0, 1.0);
-        features[0] = offset;
-        features[1] = distanceToResources;
-        features[2] = avatarResources;
-        features[3] = distanceToNPC;
-        features[4] = distanceToMovables;
-        features[5] = distanceToImmovables;
-        features[6] = distanceToPortals;
-        features[7] = healthPoints;
-        return features;
-    }
-
     double getBarycenterBias(StateObservation _state) {
         Vector2d myLocation = _state.getAvatarPosition();
         double tempBarycenterBias = Math.sqrt(myLocation.sqDist(barycenter)) / distancesNormalizer;
@@ -333,15 +212,15 @@ class TreeSearchPlayer {
 
     double getLocationBias(StateObservation _state) {
         double power = 3.0;
-        int parsingIndex = 0;
         double tempLocationBias = 0.0;
         double timeDiscountFactor = 0.99;
         double currentTick = _state.getGameTick();
-        while ((parsingIndex < memoryLength) && (pastAvatarPositions[parsingIndex] != null)) {
+        for (int parsingIndex = 0; parsingIndex < memoryLength; parsingIndex++) {
+            if (pastAvatarPositions[parsingIndex] == null)
+                break;
             if ((pastAvatarPositions[parsingIndex].equals(_state.getAvatarPosition()))) {
                 tempLocationBias += Math.pow(timeDiscountFactor, currentTick - pastGameTicks[parsingIndex]) * 0.01;
             }
-            parsingIndex++;
         }
         return Math.pow(1.0 - tempLocationBias, power);
     }
@@ -352,32 +231,5 @@ class TreeSearchPlayer {
 
     double getBarycenterBiasWeight() {
         return barycenterBiasWeight;
-    }
-
-    private void updatePastFeaturesGrid(IntDoubleHashMap[] _features) {
-        double nbFeatures = 0.;
-        for (int i = 0; i < _features.length; i++) {
-            for (Integer type : _features[i].keySet()) {
-                nbFeatures += 1.;
-                int bucketIndex = (int) Math.floor(_features[i].get(type) * nbGridBuckets);
-
-                if (!pastFeaturesGrid[i].containsKey(type)) {
-                    double[] newBucketVector = new double[nbGridBuckets + 1];
-                    for (int j = 0; j < newBucketVector.length; j++) {
-                        newBucketVector[j] = 0.;
-                    }
-                    newBucketVector[bucketIndex] = 1.;
-                    pastFeaturesGrid[i].put(type, newBucketVector);
-                }
-                else{
-                    double[] oldBucketVector = pastFeaturesGrid[i].get(type);
-                    oldBucketVector[bucketIndex] = oldBucketVector[bucketIndex] + 1.;
-                    pastFeaturesGrid[i].put(type, oldBucketVector);
-                }
-            }
-        }
-        if(nbFeatures > maxNbFeatures){
-            maxNbFeatures = nbFeatures;
-        }
     }
 }

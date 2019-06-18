@@ -167,7 +167,7 @@ public class GameKnowledge{
 
     // Zakładam, że avatar jest centralnie na polu i sprawdzam sąsiednie pola na obecność NPC
     private boolean CheckForNearbyNpc(StateObservation stateObs, Position2D avatarPos) {
-        if(avatarPos.x < 0 || avatarPos.y < 0 || avatarPos.x > gameWidth || avatarPos.y > gameHeight)
+        if(avatarPos.x < 0 || avatarPos.y < 0 || avatarPos.x >= gameWidth || avatarPos.y >= gameHeight)
             return false;
         if(avatarPos.x >= 1){
             for(var o : stateObs.getObservationGrid()[(int)avatarPos.x - 1][(int)avatarPos.y]){
