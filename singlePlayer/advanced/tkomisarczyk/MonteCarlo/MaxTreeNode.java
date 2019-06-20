@@ -10,11 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class TreeNode implements ITreeNode{
-    TreeNode parent;
+public class MaxTreeNode implements ITreeNode {
+    MaxTreeNode parent;
     int depth;
     int maxDepth;
-    List<TreeNode> children;
+    List<MaxTreeNode> children;
     List<Types.ACTIONS> childActions;
     int numTests = 0;
     int sumScore = 0;
@@ -24,15 +24,15 @@ public class TreeNode implements ITreeNode{
     Random generator;
     double K = 1.41;
     StateObservation state = null; // NULL dla wszystkich poza rootem
-    
-    TreeNode(){
+
+    MaxTreeNode(){
         this.maxDepth = 10;
         this.depth = 0;
         this.parent = null;
         this.generator = new Random();
     }
-    
-    TreeNode(int maxDepth, StateObservation obs) {
+
+    MaxTreeNode(int maxDepth, StateObservation obs) {
         // Dla korzenia nie robię symulacji
         this.maxDepth = AgentParameters.GetInstance().maxDepth;
         this.depth = 0;
@@ -42,8 +42,8 @@ public class TreeNode implements ITreeNode{
         this.stateScore = Utilities.EvaluateState(obs);
         this.localScore = stateScore;
     }
-    
-    TreeNode(TreeNode parent, StateObservation obs) {
+
+    MaxTreeNode(MaxTreeNode parent, StateObservation obs) {
         AgentParameters params = AgentParameters.GetInstance();
         this.maxDepth = params.maxDepth;
         this.depth = parent.depth + 1;
@@ -184,13 +184,13 @@ public class TreeNode implements ITreeNode{
                 children.add(null);
                 childActions.add(actions.get(i));
             }
-            children.set(choice, new TreeNode(this, obs));
+            children.set(choice, new MaxTreeNode(this, obs));
             uninitiatedChildren = actions.size() - 1;
         }
         else if (uninitiatedChildren > 0) {    // Ten węzeł ma nierozwinięte dzieci
             int choice = GetNthUninitialized(generator.nextInt(UninitiatedLeft()));
             obs.advance(actions.get(choice));
-            children.set(choice, new TreeNode(this, obs));
+            children.set(choice, new MaxTreeNode(this, obs));
             uninitiatedChildren--;
         }
         else {
@@ -250,13 +250,13 @@ public class TreeNode implements ITreeNode{
             }
             int choice = generator.nextInt(childActions.size());
             obs.advance(childActions.get(choice));
-            children.set(choice, new TreeNode(this, obs));
+            children.set(choice, new MaxTreeNode(this, obs));
             uninitiatedChildren = childActions.size() - 1;
         }
         else if (uninitiatedChildren > 0) {    // Ten węzeł ma nierozwinięte dzieci
             int choice = GetNthUninitialized(generator.nextInt(UninitiatedLeft()));
             obs.advance(childActions.get(choice));
-            children.set(choice, new TreeNode(this, obs));
+            children.set(choice, new MaxTreeNode(this, obs));
             uninitiatedChildren--;
         }
         else {
@@ -277,7 +277,7 @@ public class TreeNode implements ITreeNode{
      */
     protected int UninitiatedLeft(){
         int left = 0;
-        for (TreeNode child : children) {
+        for (MaxTreeNode child : children) {
             if (child == null) {
                 left++;
             }
@@ -310,7 +310,7 @@ public class TreeNode implements ITreeNode{
     public int ChooseChildToExpandUct(StateObservation obs) {
         double maxScore = Double.MIN_VALUE;
         double minScore = Double.MAX_VALUE;
-        for (TreeNode child : this.children) {
+        for (MaxTreeNode child : this.children) {
             if (child.sumScore > maxScore)
                 maxScore = child.sumScore;
             if (child.sumScore < minScore)
@@ -358,22 +358,27 @@ public class TreeNode implements ITreeNode{
         }
     }
     
+    @Override
     public Boolean IsRoot() {
         return parent == null;
     }
 
+    @Override
     public Types.ACTIONS GetBestScoreAction(boolean useHistory) {
         return childActions.get(GetBestScoreIndex(useHistory));
     }
 
+    @Override
     public Types.ACTIONS GetBestAverageAction(boolean useHistory) {
         return childActions.get(GetBestAverageIndex(useHistory));
     }
 
+    @Override
     public Types.ACTIONS GetMostVisitedAction(boolean useHistory) {
         return childActions.get(GetMostVisitedIndex(useHistory));
     }
 
+    @Override
     public  int GetBestScoreIndex(boolean useHistory){
         if(!useHistory || !IsRoot()){
             return GetBestScoreIndex();
@@ -404,6 +409,7 @@ public class TreeNode implements ITreeNode{
         return maxIndex;
     }
 
+    @Override
     public int GetBestScoreIndex() {
         int max = Integer.MIN_VALUE;
         int maxIndex = 0;
@@ -419,6 +425,7 @@ public class TreeNode implements ITreeNode{
         return maxIndex;
     }
 
+    @Override
     public int GetBestAverageIndex(boolean useHistory) {
         if(!useHistory){
             return GetBestAverageIndex();
@@ -445,6 +452,7 @@ public class TreeNode implements ITreeNode{
         return maxIndex;
     }
 
+    @Override
     public int GetBestAverageIndex() {
         double max = -Double.MAX_VALUE;
         int maxIndex = 0;
@@ -461,6 +469,7 @@ public class TreeNode implements ITreeNode{
         return maxIndex;
     }
     
+    @Override
     public int GetMostVisitedIndex() {
         int max = Integer.MIN_VALUE;
         int maxIndex = 0;
@@ -476,6 +485,7 @@ public class TreeNode implements ITreeNode{
         return maxIndex;
     }
     
+    @Override
     public int GetMostVisitedIndex(boolean useHistory){
         if(!useHistory || !IsRoot()){
             return GetBestScoreIndex();

@@ -17,7 +17,7 @@ public class Agent extends AbstractPlayer {
     private double acumTimeTaken;
     private int numIters;
     private ArrayList<Types.ACTIONS> actions;
-    TreeNode root;
+    ITreeNode root;
     int turnNumber;
     GameKnowledge knowledge;
     PositionHistory history;
@@ -68,7 +68,7 @@ public class Agent extends AbstractPlayer {
         remaining = elapsedTimer.remainingTimeMillis();
     }
 
-    private Types.ACTIONS ChooseBestAction(TreeNode root) {
+    private Types.ACTIONS ChooseBestAction(ITreeNode root) {
         if(params.finder == BestActionFinder.BestAverage) {
             return root.GetBestAverageAction(params.useHistoryOnExit);
         }
@@ -85,7 +85,7 @@ public class Agent extends AbstractPlayer {
         ResetTimers(elapsedTimer);
         history.Add(Position2D.GetAvatarPosition(stateObs));
 
-        root = new TreeNode(depth, stateObs);
+        root = new MaxTreeNode(depth, stateObs);
 //        String breakReason;
         int remainingLimit = 5;
         while (true) {

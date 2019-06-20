@@ -36,7 +36,7 @@ public class Test {
         int seed = new Random().nextInt();
 
         // Game and level to play
-        int gameIdx = 0;
+        int gameIdx = 93;
         int levelIdx = 1; // level names from 0 to 4 (game_lvlN.txt).
         String gameName = games[gameIdx][1];
         for(int i=0; i<111; i++){
