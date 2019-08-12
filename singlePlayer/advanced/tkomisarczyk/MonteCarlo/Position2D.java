@@ -4,7 +4,6 @@ import core.game.Observation;
 import core.game.StateObservation;
 import ontology.Types;
 import tools.Vector2d;
-import tracks.singlePlayer.past.Return42.knowledgebase.KnowledgeBase;
 
 import java.util.ArrayList;
 
@@ -30,20 +29,20 @@ public class Position2D {
     }
     
     public static Position2D GetAvatarPosition(StateObservation obs){
-        var res = new Position2D();
+        Position2D res = new Position2D();
         res.x = obs.getAvatarPosition().x / obs.getBlockSize();
         res.y = obs.getAvatarPosition().y / obs.getBlockSize();
         return res;
     }
 
     public static ArrayList<Observation> GetObservations(StateObservation obs, double x, double y){
-        var baseX = (int) x;
-        var baseY = (int) y;
+        int baseX = (int) x;
+        int baseY = (int) y;
         if(baseX >= obs.getObservationGrid().length || baseY >= obs.getObservationGrid()[0].length || baseX < 0 || baseY < 0) {
             return new ArrayList<>();
         }
-        var nextX = baseX;
-        var nextY = baseY;
+        int nextX = baseX;
+        int nextY = baseY;
         double margin = 0.01;
         ArrayList<Observation> results = new ArrayList<>(obs.getObservationGrid()[baseX][baseY]);
         if(baseX - x > margin && baseX > 1.0){
@@ -79,7 +78,7 @@ public class Position2D {
 
     public static Position2D ModifyPosition(Position2D source, Types.ACTIONS action){
         Position2D newPosition = source;
-        var speed = GameKnowledge.getInstance().avatarSpeed;
+        double speed = GameKnowledge.getInstance().avatarSpeed;
         if(action == Types.ACTIONS.ACTION_UP){
             newPosition = new Position2D(source.x, source.y - speed);
         }
@@ -100,9 +99,9 @@ public class Position2D {
     }
 
     public PositionGridType IsOnGrid(){
-        var baseX = (int) x;
-        var baseY = (int) y;
-        var margin = 0.01;
+        int baseX = (int) x;
+        int baseY = (int) y;
+        double margin = 0.01;
         boolean offX = (double) baseX > x + margin || (double) baseX < x - margin;
         boolean offY = (double) baseY > y + margin || (double) baseY < y - margin;
         if(offX){

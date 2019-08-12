@@ -4,7 +4,7 @@ import core.game.StateObservation;
 import ontology.Types;
 
 public interface ITreeNode {
-    Boolean IsRoot();
+    boolean IsRoot();
 
     Types.ACTIONS GetBestScoreAction(boolean useHistory);
 

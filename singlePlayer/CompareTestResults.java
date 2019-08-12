@@ -56,10 +56,9 @@ public class CompareTestResults {
     public static void main(String[] args){
         int[] scoring = new int[] {25, 18, 15, 12, 10, 8, 6, 4, 2, 1};
         String[] resultFiles = new String[]{
-                "tkomisarczyk_set1_10.txt",
-                "sampleMCTS_set1_10.txt",
-                "tkomisarczyk_12.06.txt",
-                "tkomisarczyk_12.06_poprawa.txt"
+                "adrien_training_50.txt",
+                "sampleMCTS_training_50.txt",
+                "tkomisarczyk_training_50.txt"
         };
         ArrayList<TestResult> results = new ArrayList<>();
         Gson gson = new Gson();

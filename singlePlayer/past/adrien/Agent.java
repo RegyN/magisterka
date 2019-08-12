@@ -72,7 +72,7 @@ public class Agent extends AbstractPlayer {
             avgTimeTaken = acumTimeTaken / numIters;
             remaining = elapsedTimer.remainingTimeMillis();
         }
-        System.out.println(numIters);
+        //System.out.println(numIters);
         return actions[treeSearchPlayer.returnBestAction()];
     }
 }

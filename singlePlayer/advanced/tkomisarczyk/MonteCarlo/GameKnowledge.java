@@ -5,7 +5,6 @@ import core.game.StateObservation;
 import ontology.Types;
 import tools.ElapsedCpuTimer;
 import tools.Vector2d;
-import tracks.singlePlayer.past.Return42.util.Util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,7 +60,7 @@ public class GameKnowledge{
     }
 
     public boolean CheckForWalls(ArrayList<Observation> objects){
-        for(var o : objects){
+        for(Observation o : objects){
             if(this.sprites[o.itype] == SpriteType.Wall){
                 return true;
             }
@@ -73,7 +72,7 @@ public class GameKnowledge{
         gameHeight = stateObs.getWorldDimension().height / stateObs.getBlockSize();
         gameWidth = stateObs.getWorldDimension().width / stateObs.getBlockSize();
         avatarSpeed = stateObs.getAvatarSpeed();
-        var actions = stateObs.getAvailableActions();
+        ArrayList<Types.ACTIONS> actions = stateObs.getAvailableActions();
         if (actions.contains(Types.ACTIONS.ACTION_UP) && actions.contains(Types.ACTIONS.ACTION_DOWN)
                 && actions.contains(Types.ACTIONS.ACTION_LEFT) && actions.contains(Types.ACTIONS.ACTION_RIGHT)) {
             type = GameType.Planar2D;
@@ -82,9 +81,9 @@ public class GameKnowledge{
         }
         // Statycznie zbieram info o spritach w grze
         sprites[stateObs.getAvatarType()] = SpriteType.Player;
-        var avatarPos = Position2D.GetAvatarPosition(stateObs);
-        var obs = Position2D.GetObservations(stateObs, avatarPos.x, avatarPos.y);
-        for (var o : obs) {
+        Position2D avatarPos = Position2D.GetAvatarPosition(stateObs);
+        ArrayList<Observation> obs = Position2D.GetObservations(stateObs, avatarPos.x, avatarPos.y);
+        for (Observation o : obs) {
             if (o.itype != stateObs.getAvatarType()) {
                 sprites[o.itype] = SpriteType.Floor; // Jeśli na początku gry coś jest bezpośrednio pod graczem, to pewnie jest to podłoga.
             }
@@ -99,7 +98,19 @@ public class GameKnowledge{
         for(Types.ACTIONS testAction : actions){
             StateObservation stateCopy = stateObs.copy();
             stateCopy.advance(testAction);
-            Vector2d walkDirection = Util.convertActionToMovement(testAction);
+            Vector2d walkDirection;
+            switch (testAction) {
+                case ACTION_DOWN:
+                    walkDirection = Types.DOWN;
+                case ACTION_UP:
+                    walkDirection = Types.UP;
+                case ACTION_RIGHT:
+                    walkDirection = Types.RIGHT;
+                case ACTION_LEFT:
+                    walkDirection = Types.LEFT;
+                default:
+                    walkDirection = Types.NONE;
+            }
             Vector2d newPosition = stateCopy.getAvatarPosition();
             
             // Can we can walk to an field without having the right orientation?
@@ -115,8 +126,8 @@ public class GameKnowledge{
     public void GatherSpriteInfoRandomly(StateObservation stateObs, ElapsedCpuTimer elapsedTimer) {
         //Dynamiczne zbieranie informacji o grze
         StateObservation stCopy = stateObs.copy();
-        var generator = new Random();
-        var avatarPos = Position2D.GetAvatarPosition(stCopy);
+        Random generator = new Random();
+        Position2D avatarPos = Position2D.GetAvatarPosition(stCopy);
         int testInRow = 0;
         while(elapsedTimer.remainingTimeMillis() > 10){
             if(stCopy.isGameOver() || CheckForNearbyNpc(stCopy, avatarPos)){
@@ -151,7 +162,7 @@ public class GameKnowledge{
     // Zwraca Obserwację, która nie jest znana, jeśli jest jedyną nieznaną obserwacją w tablicy.
     private Observation FindSingleUnknown(ArrayList<Observation> objects){
         Observation unknown = null;
-        for(var o : objects){
+        for(Observation o : objects){
             if(this.sprites[o.itype] == SpriteType.Unknown){
                 if(unknown == null){
                     unknown = o;
@@ -170,25 +181,25 @@ public class GameKnowledge{
         if(avatarPos.x < 0 || avatarPos.y < 0 || avatarPos.x >= gameWidth || avatarPos.y >= gameHeight)
             return false;
         if(avatarPos.x >= 1){
-            for(var o : stateObs.getObservationGrid()[(int)avatarPos.x - 1][(int)avatarPos.y]){
+            for(Observation o : stateObs.getObservationGrid()[(int)avatarPos.x - 1][(int)avatarPos.y]){
                 if(o.category == NPC_CATEGORY)
                     return true;
             }
         }
         if(avatarPos.x < gameWidth - 1){
-            for(var o : stateObs.getObservationGrid()[(int)avatarPos.x + 1][(int)avatarPos.y]){
+            for(Observation o : stateObs.getObservationGrid()[(int)avatarPos.x + 1][(int)avatarPos.y]){
                 if(o.category == NPC_CATEGORY)
                     return true;
             }
         }
         if(avatarPos.y >= 1){
-            for(var o : stateObs.getObservationGrid()[(int)avatarPos.x][(int)avatarPos.y - 1]){
+            for(Observation o : stateObs.getObservationGrid()[(int)avatarPos.x][(int)avatarPos.y - 1]){
                 if(o.category == NPC_CATEGORY)
                     return true;
             }
         }
         if(avatarPos.y < gameHeight - 1){
-            for(var o : stateObs.getObservationGrid()[(int)avatarPos.x][(int)avatarPos.y + 1]){
+            for(Observation o : stateObs.getObservationGrid()[(int)avatarPos.x][(int)avatarPos.y + 1]){
                 if(o.category == NPC_CATEGORY)
                     return true;
             }
@@ -198,7 +209,7 @@ public class GameKnowledge{
 
     // Avatar centralnie na polu, sprawdzam czy w okolicy da się czegoś dowiedzieć i jeśli tak, to się dowiaduję 1 ruchem
     private boolean tryGetInfoFromSurrounding(StateObservation stateObs, Position2D avatarPos) {
-        var gotInfo = false;
+        boolean gotInfo = false;
         if(tryLearnSingleUnknown(stateObs, avatarPos.x+1, avatarPos.y, Types.ACTIONS.ACTION_RIGHT)){
             gotInfo = true;
         }
@@ -218,15 +229,15 @@ public class GameKnowledge{
         if(x < 0 || y < 0 || x >= GameKnowledge.getInstance().gameWidth || y >= GameKnowledge.getInstance().gameHeight){
             return false;
         }
-        var unknown = FindSingleUnknown(Position2D.GetObservationsFast(stateObs, x, y));
-        var canLearn = (unknown != null);
+        Observation unknown = FindSingleUnknown(Position2D.GetObservationsFast(stateObs, x, y));
+        boolean canLearn = (unknown != null);
         if(canLearn){
             double numberOfPoints = stateObs.getGameScore();
             Position2D avatarPosBefore = Position2D.GetAvatarPosition(stateObs);
-            var avatarOrientationBefore = stateObs.getAvatarOrientation();
+            Vector2d avatarOrientationBefore = stateObs.getAvatarOrientation();
             stateObs.advance(action);
             Position2D avatarPosAfter = Position2D.GetAvatarPosition(stateObs);
-            var avatarOrientationAfter = stateObs.getAvatarOrientation();
+            Vector2d avatarOrientationAfter = stateObs.getAvatarOrientation();
             if(!stateObs.isAvatarAlive()){
                 sprites[unknown.itype] = SpriteType.Enemy;
             }
@@ -238,8 +249,11 @@ public class GameKnowledge{
                 if(isAvatarOriented && (avatarOrientationBefore.x != avatarOrientationAfter.x ||
                         avatarOrientationBefore.y != avatarOrientationAfter.y)){
                     stateObs.advance(action);
+                    avatarPosAfter = Position2D.GetAvatarPosition(stateObs);
                 }
-                if(FindSingleUnknown(Position2D.GetObservationsFast(stateObs, x, y)) == unknown){
+                if(FindSingleUnknown(Position2D.GetObservationsFast(stateObs, x, y)) == unknown
+                    && avatarPosAfter.x == avatarPosBefore.x && avatarPosAfter.y == avatarPosBefore.y
+                    && unknown.category == 4){
                     sprites[unknown.itype] = SpriteType.Wall;
                 }
                 else{
@@ -254,9 +268,9 @@ public class GameKnowledge{
     }
 
     private boolean trySnapToGrid(StateObservation stateObs, Position2D avatarPos) {
-        var grid = Position2D.GetAvatarPosition(stateObs).IsOnGrid();
-        var positionChanged = false;
-        var generator = new Random();
+        PositionGridType grid = Position2D.GetAvatarPosition(stateObs).IsOnGrid();
+        boolean positionChanged = false;
+        Random generator = new Random();
         if(grid == PositionGridType.OffX){
             int choice = generator.nextInt(2);
             if(choice == 1){

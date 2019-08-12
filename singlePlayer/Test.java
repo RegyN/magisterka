@@ -20,6 +20,7 @@ public class Test {
         String Return42 = "tracks.singlePlayer.past.Return42.Agent";
         // Mistrzowie starzy:
         String adrien = "tracks.singlePlayer.past.adrien.Agent";
+        String adrien2 = "tracks.singlePlayer.past.adrien2.Agent";
         String idealStandard = "tracks.singlePlayer.past.IdealStandard.Agent";
         String Shmokin = "tracks.singlePlayer.past.Shmokin.Agent";
         // Mistrzowie przyszli:
@@ -36,7 +37,7 @@ public class Test {
         int seed = new Random().nextInt();
 
         // Game and level to play
-        int gameIdx = 93;
+        int gameIdx = 68;
         int levelIdx = 1; // level names from 0 to 4 (game_lvlN.txt).
         String gameName = games[gameIdx][1];
         for(int i=0; i<111; i++){

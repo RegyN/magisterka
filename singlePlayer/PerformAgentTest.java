@@ -20,10 +20,13 @@ public class PerformAgentTest {
 
     private static void setUpParameters(String[] args){
         FileToExtend = "";
-        FileToSave = "tkomisarczyk_12.06_poprawa.txt";
+        FileToSave = "test_z_usuniętym_dzieleniem_1.txt";
         //Controller = "tracks.singlePlayer.past.Return42.Agent";
+        //Controller = "tracks.singlePlayer.past.adrien2.Agent";
         Controller = "tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo.Agent";
-        gamesToPlay = new int[]{0, 42, 68};//{0, 11, 13, 18, 42, 60, 68, 80, 84, 100}
+        // Zbiór treningowy 2014: {0, 11, 13, 18, 42, 60, 68, 80, 84, 100}
+        // Zbiór testowy 2014: {10, 16, 36, 52, 54, 58, 65, 66, 75, 83}
+        gamesToPlay = new int[]{0, 11, 13, 18, 42, 60, 68, 80, 84, 100};
         numTests = 10;
         levelsToPlay = new int[] {0, 1, 2, 3, 4};
         generator = new Random();

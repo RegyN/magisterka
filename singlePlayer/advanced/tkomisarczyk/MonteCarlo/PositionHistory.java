@@ -32,7 +32,7 @@ public class PositionHistory {
     }
     
     public boolean Contains(Position2D position){
-        for(var p : Positions){
+        for(Position2D p : Positions){
             if(p.Equals(position)){
                 return true;
             }
@@ -42,7 +42,7 @@ public class PositionHistory {
     
     public int Count(Position2D position){
         int count = 0;
-        for(var p : Positions){
+        for(Position2D p : Positions){
             if(p.Equals(position)){
                 count++;
             }
@@ -57,17 +57,17 @@ public class PositionHistory {
         }
     }
 
-    double getLocationBias(StateObservation state) {
+    float getLocationBias(StateObservation state) {
         double power = 3.0;
         double tempLocationBias = 0.0;
         double timeDiscountFactor = 0.99;
         int i = 0;
-        for (var pos : Positions) {
+        for (Position2D pos : Positions) {
             if (((Position2D.GetAvatarPosition(state).Equals(pos)))) {
                 tempLocationBias += Math.pow(timeDiscountFactor, length - i) * 0.01;
             }
             i++;
         }
-        return Math.pow(1.0 - tempLocationBias, power);
+        return (float)Math.pow(1.0 - tempLocationBias, power);
     }
 }

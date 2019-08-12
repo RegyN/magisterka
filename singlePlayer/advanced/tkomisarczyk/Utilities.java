@@ -1,9 +1,10 @@
 package tracks.singlePlayer.advanced.tkomisarczyk;
 
+import core.game.Observation;
 import core.game.StateObservation;
 import ontology.Types;
-import tracks.singlePlayer.tools.Heuristics.WinScoreHeuristic;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 public class Utilities {
@@ -13,7 +14,7 @@ public class Utilities {
     }
 
     public static double DisturbScore(double score){
-        return score + generator.nextDouble()/100;
+        return score + generator.nextDouble()/100 + score*generator.nextDouble()*0.00001;
     }
     
     public static int EvaluateState(StateObservation obs) {
@@ -27,10 +28,11 @@ public class Utilities {
         double rawScore = obs.getGameScore();
     
         if(gameOver && win == Types.WINNER.PLAYER_LOSES)
-            return -3*largeNumber/(2+turns);
+            //return -3*largeNumber/(2+turns);
+            return (int)(-largeNumber + rawScore);
     
         if(gameOver && win == Types.WINNER.PLAYER_WINS)
-            return largeNumber;
+            return (int)(largeNumber + rawScore);
     
         return (int)rawScore;
     }
@@ -46,8 +48,8 @@ public class Utilities {
             return false;
         }
         //// NPC
-        var firstNpc = first.getNPCPositions();
-        var secondNpc = second.getNPCPositions();
+        ArrayList<Observation>[] firstNpc = first.getNPCPositions();
+        ArrayList<Observation>[] secondNpc = second.getNPCPositions();
         if(firstNpc.length != secondNpc.length)
             return false;
         for(int i = 0; i < firstNpc.length; i++){
@@ -68,8 +70,8 @@ public class Utilities {
             }
         }
         //// Movable
-        var firstMovable = first.getNPCPositions();
-        var secondMovable = second.getNPCPositions();
+        ArrayList<Observation>[] firstMovable = first.getNPCPositions();
+        ArrayList<Observation>[] secondMovable = second.getNPCPositions();
         if(firstMovable.length != secondMovable.length)
             return false;
         for(int i = 0; i < firstMovable.length; i++){

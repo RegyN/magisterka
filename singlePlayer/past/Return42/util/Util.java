@@ -41,7 +41,6 @@ public class Util {
 	}
 	
 	public static Vector2d convertActionToMovement(ACTIONS action) {
-
 		switch (action) {
 		case ACTION_DOWN:
 			return Types.DOWN;

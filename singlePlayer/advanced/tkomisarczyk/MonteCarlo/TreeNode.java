@@ -22,7 +22,7 @@ public class TreeNode implements ITreeNode{
     int localScore = 0;
     int uninitiatedChildren;
     Random generator;
-    double K = 1.41;
+    double K = 1.4;
     StateObservation state = null; // NULL dla wszystkich poza rootem
     
     TreeNode(){
@@ -61,7 +61,7 @@ public class TreeNode implements ITreeNode{
     }
     
     private int RollSimulation(StateObservation obs, Random generator) {
-        var actions = obs.getAvailableActions();
+        ArrayList<Types.ACTIONS> actions = obs.getAvailableActions();
         int d = depth;
         for (; d < maxDepth; d++) {
             if (obs.isGameOver())
@@ -75,40 +75,40 @@ public class TreeNode implements ITreeNode{
     // Symulacje prowadzone w taki sposób, że jeśli została wylosowana akcja prowadząca w ścianę, to losowane jest jeszcze raz
     // Możliwe jest, że za drugim razem wylosowane będzie to samo
     private int RollSimulationCleverly(StateObservation obs, Random generator){
-        var actions = obs.getAvailableActions();
-        var knowledge = GameKnowledge.getInstance();
+        ArrayList<Types.ACTIONS> actions = obs.getAvailableActions();
+        GameKnowledge knowledge = GameKnowledge.getInstance();
         int d = depth;
         for (; d < maxDepth; d++) {
             if (obs.isGameOver())
                 break;
             int choice = generator.nextInt(actions.size());
-//            Position2D avatarPos = Position2D.GetAvatarPosition(obs);
-//
-//            // Sprawdzam, co znajduje się w kierunku, który wybrał generator
-//            ArrayList<Observation> obstacles = new ArrayList<>();
-//            if(actions.get(choice) == Types.ACTIONS.ACTION_UP){
-//                obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y-knowledge.avatarSpeed);
-//            }
-//            else if(actions.get(choice) == Types.ACTIONS.ACTION_DOWN){
-//                obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y+knowledge.avatarSpeed);
-//            }
-//            else if(actions.get(choice) == Types.ACTIONS.ACTION_LEFT){
-//                obstacles = Position2D.GetObservations(obs, avatarPos.x-knowledge.avatarSpeed, avatarPos.y);
-//            }
-//            else if(actions.get(choice) == Types.ACTIONS.ACTION_RIGHT){
-//                obstacles = Position2D.GetObservations(obs, avatarPos.x+knowledge.avatarSpeed, avatarPos.y);
-//            }
-//            // Jeśli są tam jakieś ściany, to losuję jeszcze raz
-//            if(knowledge.CheckForWalls(obstacles)){
-//                choice = generator.nextInt(actions.size());
-//            }
+            Position2D avatarPos = Position2D.GetAvatarPosition(obs);
+
+            // Sprawdzam, co znajduje się w kierunku, który wybrał generator
+            ArrayList<Observation> obstacles = new ArrayList<>();
+            if(actions.get(choice) == Types.ACTIONS.ACTION_UP){
+                obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y-knowledge.avatarSpeed);
+            }
+            else if(actions.get(choice) == Types.ACTIONS.ACTION_DOWN){
+                obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y+knowledge.avatarSpeed);
+            }
+            else if(actions.get(choice) == Types.ACTIONS.ACTION_LEFT){
+                obstacles = Position2D.GetObservations(obs, avatarPos.x-knowledge.avatarSpeed, avatarPos.y);
+            }
+            else if(actions.get(choice) == Types.ACTIONS.ACTION_RIGHT){
+                obstacles = Position2D.GetObservations(obs, avatarPos.x+knowledge.avatarSpeed, avatarPos.y);
+            }
+            // Jeśli są tam jakieś ściany, to losuję jeszcze raz
+            if(knowledge.CheckForWalls(obstacles)){
+                choice = generator.nextInt(actions.size());
+            }
             obs.advance(actions.get(choice));
         }
         return Utilities.EvaluateState(obs, d);
     }
 
     private int RollSimulationCleverly(StateObservation obs, Random generator, boolean useHistory){
-        var result = RollSimulationCleverly(obs, generator);
+        int result = RollSimulationCleverly(obs, generator);
         if(useHistory){
             result += PositionHistory.GetInstance().getLocationBias(obs);
         }
@@ -117,8 +117,8 @@ public class TreeNode implements ITreeNode{
 
     // Symulacje prowadzone w taki sposób, ze niemożliwe jest zrobienie ruchu w ścianę itp.
     private int RollSimulationBetter(StateObservation obs, Random generator){
-        var actions = obs.getAvailableActions();
-        var knowledge = GameKnowledge.getInstance();
+        ArrayList<Types.ACTIONS> actions = obs.getAvailableActions();
+        GameKnowledge knowledge = GameKnowledge.getInstance();
         int d = depth;
         for (; d < maxDepth; d++) {
             if (obs.isGameOver())
@@ -167,9 +167,9 @@ public class TreeNode implements ITreeNode{
         if(this.IsRoot()){
             obs = obs.copy();
         }
-        var actions = obs.getAvailableActions();
+        ArrayList<Types.ACTIONS> actions = obs.getAvailableActions();
         if(actions.size() <= 0){  // Czasami z powodu niedeterminizmu gra kończy się wcześniej niż by się można spodziewać. Wtedy wracamy do korzenia.
-            var result = Utilities.EvaluateState(obs);
+            int result = Utilities.EvaluateState(obs);
             UpdateScoreUpwards(result);
             //System.out.print(".");
             return;
@@ -205,9 +205,9 @@ public class TreeNode implements ITreeNode{
         if(this.IsRoot()){
             obs = obs.copy();
         }
-        var actions = obs.getAvailableActions();
+        ArrayList<Types.ACTIONS> actions = obs.getAvailableActions();
         if(actions.size() <= 0){  // Czasami z powodu niedeterminizmu gra kończy się wcześniej niż by się można spodziewać. Wtedy wracamy do korzenia.
-            var result = Utilities.EvaluateState(obs);
+            int result = Utilities.EvaluateState(obs);
             UpdateScoreUpwards(result);
             //System.out.print(".");
             return;
@@ -243,7 +243,7 @@ public class TreeNode implements ITreeNode{
                 childActions.add(actions.get(i));
             }
             if(childActions.size() <= 0){
-                var result = Utilities.EvaluateState(obs);
+                int result = Utilities.EvaluateState(obs);
                 UpdateScoreUpwards(result);
                 //System.out.print(",");
                 return;
@@ -261,7 +261,7 @@ public class TreeNode implements ITreeNode{
         }
         else {
             if(childActions.size() <= 0){
-                var result = Utilities.EvaluateState(obs);
+                int result = Utilities.EvaluateState(obs);
                 UpdateScoreUpwards(result);
                 //System.out.print(",");
                 return;
@@ -329,7 +329,7 @@ public class TreeNode implements ITreeNode{
         }
 
         Position2D avatarPos = Position2D.GetAvatarPosition(obs);
-        var knowledge = GameKnowledge.getInstance();
+        GameKnowledge knowledge = GameKnowledge.getInstance();
         ArrayList<Observation> obstacles = new ArrayList<>();
         if(childActions.get(choice) == Types.ACTIONS.ACTION_UP){
             obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y-knowledge.avatarSpeed);
@@ -358,7 +358,7 @@ public class TreeNode implements ITreeNode{
         }
     }
     
-    public Boolean IsRoot() {
+    public boolean IsRoot() {
         return parent == null;
     }
 
@@ -378,18 +378,18 @@ public class TreeNode implements ITreeNode{
         if(!useHistory || !IsRoot()){
             return GetBestScoreIndex();
         }
-        var history = PositionHistory.GetInstance();
-        var correctionFactor = 0.8;
-        var avatarPos = Position2D.GetAvatarPosition(state);
+        PositionHistory history = PositionHistory.GetInstance();
+        double correctionFactor = 0.8;
+        Position2D avatarPos = Position2D.GetAvatarPosition(state);
         double max = -Double.MAX_VALUE;
         int maxIndex = 0;
         for (int i = 0; i < children.size(); i++) {
             if (children.get(i) == null) {
                 continue;
             }
-            var score = Utilities.DisturbScore(children.get(i).sumScore);
+            double score = Utilities.DisturbScore(children.get(i).sumScore);
             if(score > max){
-                var action = childActions.get(i);
+                Types.ACTIONS action = childActions.get(i);
                 Position2D newPosition = Position2D.ModifyPosition(avatarPos, action);
                 score = score - history.Count(newPosition);
                 if(history.Contains(newPosition)){
@@ -423,17 +423,17 @@ public class TreeNode implements ITreeNode{
         if(!useHistory){
             return GetBestAverageIndex();
         }
-        var history = PositionHistory.GetInstance();
-        var avatarPos = Position2D.GetAvatarPosition(state);
+        PositionHistory history = PositionHistory.GetInstance();
+        Position2D avatarPos = Position2D.GetAvatarPosition(state);
         double max = Double.MIN_VALUE;
         int maxIndex = 0;
         for (int i = 0; i < children.size(); i++) {
             if(children.get(i) == null){
                 continue;
             }
-            var score = Utilities.DisturbScore(children.get(i).numTests);
+            double score = Utilities.DisturbScore(children.get(i).numTests);
             if (children.get(i).numTests != 0 && score > max) {
-                var action = childActions.get(i);
+                Types.ACTIONS action = childActions.get(i);
                 Position2D newPosition = Position2D.ModifyPosition(avatarPos, action);
                 score = score - history.Count(newPosition);
                 if(score > max){
@@ -480,17 +480,17 @@ public class TreeNode implements ITreeNode{
         if(!useHistory || !IsRoot()){
             return GetBestScoreIndex();
         }
-        var history = PositionHistory.GetInstance();
-        var avatarPos = Position2D.GetAvatarPosition(state);
+        PositionHistory history = PositionHistory.GetInstance();
+        Position2D avatarPos = Position2D.GetAvatarPosition(state);
         double max = -Double.MAX_VALUE;
         int maxIndex = 0;
         for (int i = 0; i < children.size(); i++) {
             if (children.get(i) == null) {
                 continue;
             }
-            var score = Utilities.DisturbScore(children.get(i).numTests);
+            double score = Utilities.DisturbScore(children.get(i).numTests);
             if(score > max){
-                var action = childActions.get(i);
+                Types.ACTIONS action = childActions.get(i);
                 Position2D newPosition = Position2D.ModifyPosition(avatarPos, action);
                 score = score - history.Count(newPosition);
                 if(score > max){
