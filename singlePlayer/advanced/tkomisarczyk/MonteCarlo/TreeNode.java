@@ -12,26 +12,28 @@ import java.util.Random;
 
 public class TreeNode implements ITreeNode{
     TreeNode parent;
+    boolean useTurnNumberOnLoss;
     int depth;
     int maxDepth;
     List<TreeNode> children;
     List<Types.ACTIONS> childActions;
     int numTests = 0;
+    float localScore = 0;
+    /// Ocena stanu w obecnym węźle
+    float stateScore = 0;
     int sumScore = 0;
-    int stateScore = 0;
-    int localScore = 0;
     int uninitiatedChildren;
     Random generator;
-    double K = 1.4;
+    double K = 1.41;
     StateObservation state = null; // NULL dla wszystkich poza rootem
-    
+
     TreeNode(){
         this.maxDepth = 10;
         this.depth = 0;
         this.parent = null;
         this.generator = new Random();
     }
-    
+
     TreeNode(int maxDepth, StateObservation obs) {
         // Dla korzenia nie robię symulacji
         this.maxDepth = AgentParameters.GetInstance().maxDepth;
@@ -42,13 +44,15 @@ public class TreeNode implements ITreeNode{
         this.stateScore = Utilities.EvaluateState(obs);
         this.localScore = stateScore;
     }
-    
+
     TreeNode(TreeNode parent, StateObservation obs) {
         AgentParameters params = AgentParameters.GetInstance();
+        this.useTurnNumberOnLoss = params.useTurnsOnLoss;
         this.maxDepth = params.maxDepth;
         this.depth = parent.depth + 1;
         this.parent = parent;
         this.generator = parent.generator;
+        PositionHistory pos = PositionHistory.GetInstance();
         this.stateScore = Utilities.EvaluateState(obs);
         int result;
         if(params.rollSimulationCleverly && GameKnowledge.getInstance().type == GameType.Planar2D) {
@@ -69,7 +73,7 @@ public class TreeNode implements ITreeNode{
             int choice = generator.nextInt(actions.size());
             obs.advance(actions.get(choice));
         }
-        return Utilities.EvaluateState(obs, d);
+        return useTurnNumberOnLoss ? Utilities.EvaluateState(obs, d) : Utilities.EvaluateState(obs);
     }
 
     // Symulacje prowadzone w taki sposób, że jeśli została wylosowana akcja prowadząca w ścianę, to losowane jest jeszcze raz
@@ -104,7 +108,7 @@ public class TreeNode implements ITreeNode{
             }
             obs.advance(actions.get(choice));
         }
-        return Utilities.EvaluateState(obs, d);
+        return useTurnNumberOnLoss ? Utilities.EvaluateState(obs, d) : Utilities.EvaluateState(obs);
     }
 
     private int RollSimulationCleverly(StateObservation obs, Random generator, boolean useHistory){
@@ -113,54 +117,6 @@ public class TreeNode implements ITreeNode{
             result += PositionHistory.GetInstance().getLocationBias(obs);
         }
         return result;
-    }
-
-    // Symulacje prowadzone w taki sposób, ze niemożliwe jest zrobienie ruchu w ścianę itp.
-    private int RollSimulationBetter(StateObservation obs, Random generator){
-        ArrayList<Types.ACTIONS> actions = obs.getAvailableActions();
-        GameKnowledge knowledge = GameKnowledge.getInstance();
-        int d = depth;
-        for (; d < maxDepth; d++) {
-            if (obs.isGameOver())
-                break;
-            int[] actionMap = new int[actions.size()]; // indeks to wylosowany numer, wartość to akcja do wykonania
-            int choiceSize = 0;
-            Position2D avatarPos = Position2D.GetAvatarPosition(obs);
-            for(int i=0; i<actions.size(); i++){
-                if(actions.get(i) == Types.ACTIONS.ACTION_UP){
-                    if(!knowledge.CheckForWalls(Position2D.GetObservations(obs, avatarPos.x, avatarPos.y-knowledge.avatarSpeed))){
-                        actionMap[choiceSize] = i;
-                        choiceSize++;
-                    }
-                }
-                else if(actions.get(i) == Types.ACTIONS.ACTION_DOWN){
-                    if(!knowledge.CheckForWalls(Position2D.GetObservations(obs, avatarPos.x, avatarPos.y+knowledge.avatarSpeed))){
-                        actionMap[choiceSize] = i;
-                        choiceSize++;
-                    }
-                }
-                else if(actions.get(i) == Types.ACTIONS.ACTION_LEFT){
-                    if(!knowledge.CheckForWalls(Position2D.GetObservations(obs, avatarPos.x-knowledge.avatarSpeed, avatarPos.y))){
-                        actionMap[choiceSize] = i;
-                        choiceSize++;
-                    }
-                }
-                else if(actions.get(i) == Types.ACTIONS.ACTION_RIGHT){
-                    if(!knowledge.CheckForWalls(Position2D.GetObservations(obs, avatarPos.x+knowledge.avatarSpeed, avatarPos.y))){
-                        actionMap[choiceSize] = i;
-                        choiceSize++;
-                    }
-                }
-                else{
-                    actionMap[choiceSize] = i;
-                    choiceSize++;
-                }
-            }
-            int choice = generator.nextInt(choiceSize);
-            choice = actionMap[choice];
-            obs.advance(actions.get(choice));
-        }
-        return Utilities.EvaluateState(obs, d);
     }
 
     public void Expand(StateObservation obs) {
@@ -304,7 +260,7 @@ public class TreeNode implements ITreeNode{
     }
 
     private int GetNodeValue(){
-        return sumScore + stateScore;
+        return sumScore;
     }
     
     public int ChooseChildToExpandUct(StateObservation obs) {
@@ -327,26 +283,26 @@ public class TreeNode implements ITreeNode{
                 chosenScore = score;
             }
         }
-
-        Position2D avatarPos = Position2D.GetAvatarPosition(obs);
-        GameKnowledge knowledge = GameKnowledge.getInstance();
-        ArrayList<Observation> obstacles = new ArrayList<>();
-        if(childActions.get(choice) == Types.ACTIONS.ACTION_UP){
-            obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y-knowledge.avatarSpeed);
-        }
-        else if(childActions.get(choice) == Types.ACTIONS.ACTION_DOWN){
-            obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y+knowledge.avatarSpeed);
-        }
-        else if(childActions.get(choice) == Types.ACTIONS.ACTION_LEFT){
-            obstacles = Position2D.GetObservations(obs, avatarPos.x-knowledge.avatarSpeed, avatarPos.y);
-        }
-        else if(childActions.get(choice) == Types.ACTIONS.ACTION_RIGHT){
-            obstacles = Position2D.GetObservations(obs, avatarPos.x+knowledge.avatarSpeed, avatarPos.y);
-        }
-        // Jeśli są tam jakieś ściany, to losuję jeszcze raz
-        if(knowledge.CheckForWalls(obstacles)){
-            choice = generator.nextInt(childActions.size());
-        }
+        // TODO: Sprawdzić, czy odkomentowanie tej sekcji ma sens (raczej nie)
+//        Position2D avatarPos = Position2D.GetAvatarPosition(obs);
+//        var knowledge = GameKnowledge.getInstance();
+//        ArrayList<Observation> obstacles = new ArrayList<>();
+//        if(childActions.get(choice) == Types.ACTIONS.ACTION_UP){
+//            obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y-knowledge.avatarSpeed);
+//        }
+//        else if(childActions.get(choice) == Types.ACTIONS.ACTION_DOWN){
+//            obstacles = Position2D.GetObservations(obs, avatarPos.x, avatarPos.y+knowledge.avatarSpeed);
+//        }
+//        else if(childActions.get(choice) == Types.ACTIONS.ACTION_LEFT){
+//            obstacles = Position2D.GetObservations(obs, avatarPos.x-knowledge.avatarSpeed, avatarPos.y);
+//        }
+//        else if(childActions.get(choice) == Types.ACTIONS.ACTION_RIGHT){
+//            obstacles = Position2D.GetObservations(obs, avatarPos.x+knowledge.avatarSpeed, avatarPos.y);
+//        }
+//        // Jeśli są tam jakieś ściany, to losuję jeszcze raz
+//        if(knowledge.CheckForWalls(obstacles)){
+//            choice = generator.nextInt(childActions.size());
+//        }
         return choice;
     }
     
@@ -357,11 +313,22 @@ public class TreeNode implements ITreeNode{
             parent.UpdateScoreUpwards(difference);
         }
     }
-    
+
+    @Override
     public boolean IsRoot() {
         return parent == null;
     }
 
+    public boolean IsLeaf(){
+        return children == null;
+    }
+
+    public boolean IsUnfinished(){
+        return !IsLeaf() && UninitiatedLeft() != 0;
+    }
+
+
+    @Override
     public Types.ACTIONS GetBestScoreAction(boolean useHistory) {
         return childActions.get(GetBestScoreIndex(useHistory));
     }
@@ -370,10 +337,12 @@ public class TreeNode implements ITreeNode{
         return childActions.get(GetBestAverageIndex(useHistory));
     }
 
+    @Override
     public Types.ACTIONS GetMostVisitedAction(boolean useHistory) {
         return childActions.get(GetMostVisitedIndex(useHistory));
     }
 
+    @Override
     public  int GetBestScoreIndex(boolean useHistory){
         if(!useHistory || !IsRoot()){
             return GetBestScoreIndex();
@@ -381,13 +350,13 @@ public class TreeNode implements ITreeNode{
         PositionHistory history = PositionHistory.GetInstance();
         double correctionFactor = 0.8;
         Position2D avatarPos = Position2D.GetAvatarPosition(state);
-        double max = -Double.MAX_VALUE;
+        float max = -Float.MAX_VALUE;
         int maxIndex = 0;
         for (int i = 0; i < children.size(); i++) {
             if (children.get(i) == null) {
                 continue;
             }
-            double score = Utilities.DisturbScore(children.get(i).sumScore);
+            float score = (float)Utilities.DisturbScore(children.get(i).GetNodeValue());
             if(score > max){
                 Types.ACTIONS action = childActions.get(i);
                 Position2D newPosition = Position2D.ModifyPosition(avatarPos, action);
@@ -404,21 +373,24 @@ public class TreeNode implements ITreeNode{
         return maxIndex;
     }
 
+    @Override
     public int GetBestScoreIndex() {
-        int max = Integer.MIN_VALUE;
+        float max = -Float.MAX_VALUE;
         int maxIndex = 0;
         for (int i = 0; i < children.size(); i++) {
             if(children.get(i) == null){
                 continue;
             }
-            if (children.get(i).sumScore > max) {
-                max = children.get(i).sumScore;
+            float score = (float)Utilities.DisturbScore(children.get(i).GetNodeValue());
+            if (score > max) {
+                max = score;
                 maxIndex = i;
             }
         }
         return maxIndex;
     }
 
+    @Override
     public int GetBestAverageIndex(boolean useHistory) {
         if(!useHistory){
             return GetBestAverageIndex();
@@ -431,7 +403,7 @@ public class TreeNode implements ITreeNode{
             if(children.get(i) == null){
                 continue;
             }
-            double score = Utilities.DisturbScore(children.get(i).numTests);
+            double score =  Utils.noise((double) children.get(i).sumScore / (double) children.get(i).numTests, 0.000001d, generator.nextDouble());
             if (children.get(i).numTests != 0 && score > max) {
                 Types.ACTIONS action = childActions.get(i);
                 Position2D newPosition = Position2D.ModifyPosition(avatarPos, action);
@@ -460,22 +432,8 @@ public class TreeNode implements ITreeNode{
         }
         return maxIndex;
     }
-    
-    public int GetMostVisitedIndex() {
-        int max = Integer.MIN_VALUE;
-        int maxIndex = 0;
-        for (int i = 0; i < children.size(); i++) {
-            if(children.get(i) == null){
-                continue;
-            }
-            if (children.get(i).numTests > max) {
-                max = children.get(i).numTests;
-                maxIndex = i;
-            }
-        }
-        return maxIndex;
-    }
-    
+
+    @Override
     public int GetMostVisitedIndex(boolean useHistory){
         if(!useHistory || !IsRoot()){
             return GetBestScoreIndex();
@@ -497,6 +455,22 @@ public class TreeNode implements ITreeNode{
                     max = score;
                     maxIndex = i;
                 }
+            }
+        }
+        return maxIndex;
+    }
+
+    @Override
+    public int GetMostVisitedIndex() {
+        int max = Integer.MIN_VALUE;
+        int maxIndex = 0;
+        for (int i = 0; i < children.size(); i++) {
+            if(children.get(i) == null){
+                continue;
+            }
+            if (children.get(i).numTests > max) {
+                max = children.get(i).numTests;
+                maxIndex = i;
             }
         }
         return maxIndex;

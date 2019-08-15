@@ -13,6 +13,7 @@ public class AgentParameters{
     boolean useGameKnowledge = true;
     boolean rollSimulationCleverly = true;
     boolean expandIntelligently = true;
+    boolean useTurnsOnLoss = true;
     BestActionFinder finder = BestActionFinder.BestAverage;
 
     private static AgentParameters instance;

@@ -29,12 +29,13 @@ public class Agent extends AbstractPlayer {
 
         params = AgentParameters.GetInstance(true);
         params.maxDepth = 25;
-        params.expandIntelligently = false;
-        params.rollSimulationCleverly = false;
-        params.useGameKnowledge = false;
+        params.expandIntelligently = true;
+        params.rollSimulationCleverly = true;
+        params.useGameKnowledge = true;
         params.useHistoryInValuation = true;
-        params.useHistoryOnExit = true;
-        params.finder = BestActionFinder.MostVisits;
+        params.useHistoryOnExit = false;
+        params.useTurnsOnLoss = true;
+        params.finder = BestActionFinder.BestAverage;
 
         actions = stateObs.getAvailableActions();
         turnNumber = 0;
@@ -112,7 +113,7 @@ public class Agent extends AbstractPlayer {
             history.Add(Position2D.GetAvatarPosition(stateObs));
         }
 
-        root = new TreeNode(params.maxDepth, stateObs);
+        root = new MaxTreeNode(params.maxDepth, stateObs);
 //        String breakReason;
         int remainingLimit = 5;
         while (true) {

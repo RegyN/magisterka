@@ -12,13 +12,13 @@ import java.util.Random;
 
 public class MaxTreeNode implements ITreeNode {
     MaxTreeNode parent;
+    boolean useTurnNumberOnLoss;
     int depth;
     int maxDepth;
     List<MaxTreeNode> children;
     List<Types.ACTIONS> childActions;
     int numTests = 0;
     float localScore = 0;
-
     /// Ocena stanu w obecnym węźle
     float stateScore = 0;
     /// Ocena symulowanego stanu
@@ -50,6 +50,7 @@ public class MaxTreeNode implements ITreeNode {
 
     MaxTreeNode(MaxTreeNode parent, StateObservation obs) {
         AgentParameters params = AgentParameters.GetInstance();
+        this.useTurnNumberOnLoss = params.useTurnsOnLoss;
         this.maxDepth = params.maxDepth;
         this.depth = parent.depth + 1;
         this.parent = parent;
@@ -77,7 +78,7 @@ public class MaxTreeNode implements ITreeNode {
             int choice = generator.nextInt(actions.size());
             obs.advance(actions.get(choice));
         }
-        return Utilities.EvaluateState(obs, d);
+        return useTurnNumberOnLoss ? Utilities.EvaluateState(obs, d) : Utilities.EvaluateState(obs);
     }
 
     // Symulacje prowadzone w taki sposób, że jeśli została wylosowana akcja prowadząca w ścianę, to losowane jest jeszcze raz
@@ -112,7 +113,7 @@ public class MaxTreeNode implements ITreeNode {
             }
             obs.advance(actions.get(choice));
         }
-        return Utilities.EvaluateState(obs, d);
+        return useTurnNumberOnLoss ? Utilities.EvaluateState(obs, d) : Utilities.EvaluateState(obs);
     }
 
     private int RollSimulationCleverly(StateObservation obs, Random generator, boolean useHistory){
@@ -360,6 +361,18 @@ public class MaxTreeNode implements ITreeNode {
         return childActions.get(GetBestScoreIndex(useHistory));
     }
 
+    // Najlepszy średni wynik to pojęcie które nie istnieje dla MaxTreeNode, ponieważ zapisuje jedynie maksymalny wynik.
+    // Funkcje związane ze średnim wynikiem zwracają zamiast tego po prostu najlepszy wynik.
+    @Override
+    public Types.ACTIONS GetBestAverageAction(boolean useHistory) {
+        return childActions.get(GetBestScoreIndex(useHistory));
+    }
+
+    @Override
+    public Types.ACTIONS GetMostVisitedAction(boolean useHistory) {
+        return childActions.get(GetMostVisitedIndex(useHistory));
+    }
+
     @Override
     public  int GetBestScoreIndex(boolean useHistory){
         if(!useHistory || !IsRoot()){
@@ -408,13 +421,6 @@ public class MaxTreeNode implements ITreeNode {
         return maxIndex;
     }
 
-    // Najlepszy średni wynik to pojęcie które nie istnieje dla MaxTreeNode, ponieważ zapisuje jedynie maksymalny wynik.
-    // Funkcje związane ze średnim wynikiem zwracają zamiast tego po prostu najlepszy wynik.
-    @Override
-    public Types.ACTIONS GetBestAverageAction(boolean useHistory) {
-        return childActions.get(GetBestScoreIndex(useHistory));
-    }
-
     @Override
     public int GetBestAverageIndex(boolean useHistory) {
         return GetBestScoreIndex(useHistory);
@@ -423,12 +429,6 @@ public class MaxTreeNode implements ITreeNode {
     @Override
     public int GetBestAverageIndex() {
         return GetBestScoreIndex();
-    }
-
-
-    @Override
-    public Types.ACTIONS GetMostVisitedAction(boolean useHistory) {
-        return childActions.get(GetMostVisitedIndex(useHistory));
     }
 
     @Override
