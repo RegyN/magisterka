@@ -1,0 +1,17 @@
+! ** JCreator Workspace File (C)2000
+! ********** DO NOT EDIT *********
+
+VERSION := "1.00"
+LABEL := "PathFinder"
+
+! Start Project Structure
+#[BeginProject]SOURCE := "\\PathFinder.jcp" #[EndProject]
+
+! Start Last Document Structure
+#[BeginFile]SOURCE := "\\PathFinder.java" #[EndFile]
+#[BeginFile]SOURCE := "\\classes\\PathFinder.htm" #[EndFile]
+#[BeginFile]SOURCE := "\\Node.java" #[EndFile]
+#[BeginFile]SOURCE := "\\AStar.java" #[EndFile]
+
+! Start Breakpoint Structure
+
