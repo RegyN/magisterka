@@ -29,25 +29,25 @@ public class Agent extends AbstractPlayer {
 
         params = AgentParameters.GetInstance(true);
         params.maxDepth = 25;
-        params.expandIntelligently = true;
+        params.expandIntelligently = false;
         params.rollSimulationCleverly = true;
         params.useGameKnowledge = true;
         params.useHistoryInValuation = true;
         params.useHistoryOnExit = false;
         params.useTurnsOnLoss = true;
-        params.finder = BestActionFinder.BestAverage;
+        params.finder = BestActionFinder.MostVisits;
 
         actions = stateObs.getAvailableActions();
         turnNumber = 0;
         knowledge = GameKnowledge.GetNew();
         history = PositionHistory.GetNew();
-        CalculateIterationtats();
+        CalculateIterationStats();
         if(params.useGameKnowledge) {
             ExtractKnowledge(stateObs, elapsedTimer);
         }
     }
 
-    private void CalculateIterationtats(){
+    private void CalculateIterationStats(){
         if(numberOfIters.size() == 0)
             return;
         int max = -1;
@@ -148,7 +148,7 @@ public class Agent extends AbstractPlayer {
 //        System.out.println(avgTimeTaken);
         turnNumber++;
 //        System.out.println(numIters);
-       // numberOfIters.add(numIters);
+        numberOfIters.add(numIters);
         Types.ACTIONS chosen = ChooseBestAction(root);
 //        System.out.println(chosen.name());
         return chosen;

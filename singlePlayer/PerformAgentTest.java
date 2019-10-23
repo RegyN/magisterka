@@ -20,13 +20,19 @@ public class PerformAgentTest {
 
     private static void setUpParameters(String[] args){
         FileToExtend = "";
-        FileToSave = "test_z_usuniętym_dzieleniem_1.txt";
+        FileToSave = "Improvement_sim_on_exp_off_rest_on.txt";
         //Controller = "tracks.singlePlayer.past.Return42.Agent";
         //Controller = "tracks.singlePlayer.past.adrien2.Agent";
+        //Controller = "tracks.singlePlayer.past.Shmokin.Agent";
+        //Controller = "tracks.singlePlayer.past.Normal_MCTS.Normal_MCTS.Agent";
         Controller = "tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo.Agent";
-        // Zbiór treningowy 2014: {0, 11, 13, 18, 42, 60, 68, 80, 84, 100}
-        // Zbiór testowy 2014: {10, 16, 36, 52, 54, 58, 65, 66, 75, 83}
-        gamesToPlay = new int[]{0, 11, 13, 18, 42, 60, 68, 80, 84, 100};
+        //Controller = "tracks.singlePlayer.advanced.sampleMCTS.Agent";
+        // Zbiór treningowy 2014:              {0, 11, 13, 18, 42, 60, 68, 80, 84, 100}
+        // Zbiór testowy 2014:                 {10, 16, 36, 52, 54, 58, 65, 66, 75, 83}
+        // Zelda, Portals, Boulderdash, Frogs: {11, 42, 68, 100} - zestaw do testowania historii
+        // Zelda, Portals, Boulderdash:        {11, 68, 100}
+        // Zelda, Portals, Survive Zombies:    {68, 84, 100} - zestaw do testowania unikania ścian
+        gamesToPlay = new int[]{68, 84, 100};
         numTests = 10;
         levelsToPlay = new int[] {0, 1, 2, 3, 4};
         generator = new Random();

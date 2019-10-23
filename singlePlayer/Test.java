@@ -27,6 +27,8 @@ public class Test {
         String tomekController = "tracks.singlePlayer.advanced.tkomisarczyk.MonteCarlo.Agent";
         // Przykłady
         String sampleMCTS = "tracks.singlePlayer.advanced.sampleMCTS.Agent";
+        String jerry = "tracks.singlePlayer.past.JinJerry.Agent";
+        String culim = "tracks.singlePlayer.past.culim.Agent";
 
         //Load available games
         String spGamesCollection =  "examples/all_games_sp.csv";
